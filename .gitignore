@@ -149,6 +149,11 @@ cython_debug/
 temp/
 tmp/
 
+# Node modules and local DB artifacts
+web/node_modules/
+autogen.db
+temp_autogen.db
+
 # Reference materials (clone libraries here for AI to read)
 references/
 
