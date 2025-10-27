@@ -3,7 +3,25 @@ body{ font-family: Arial, Helvetica, sans-serif; margin:0; padding:0 }
 main{ display:flex; gap:12px; padding:12px }
 .left{ width:320px; border-right:1px solid #ddd; padding-right:12px }
 .right{ flex:1; padding-left:12px }
-button{ cursor:pointer }
+.match-page { display: flex; flex-direction: column; gap: 12px; }
+.match-meta { background:#f8f9fb; border:1px solid #e6e8eb; padding:8px; max-height:160px; overflow:auto; }
+.live-panel { border: 1px solid #e1e4e8; padding: 8px; background: #fff; }
+.live-header { display:flex; justify-content:space-between; align-items:center; }
+.controls { display:flex; gap:8px; align-items:center; }
+.status { padding:4px 8px; border-radius:4px; font-weight:600; }
+.status.online { background: #e6ffed; color: #057a34; }
+.status.offline { background: #fff1f0; color: #7a1b1b; }
+.updates { max-height: 320px; overflow: auto; padding: 8px; background: #fafbfc; }
+.update-item { border-bottom: 1px dashed #eee; padding:6px 4px; }
+.update-meta { font-size: 12px; color: #555; margin-bottom:6px; }
+.update-body pre { margin:0; font-size:12px; background: #f6f8fa; padding:6px; border-radius:4px; }
+.no-updates { color:#777; }
+
+.team-logo { width:64px; height:64px; object-fit:contain; display:block; margin:0 auto 6px }
+	.team-logo { width:64px; height:64px; border-radius:6px; object-fit:cover; }
+	.timeline { background:#fff; padding:12px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+	.timeline-rows { max-height:180px; overflow:auto; }
+	.admin-seeder input { padding:8px; border-radius:4px; border:1px solid #ddd; }
 
 .match-meta pre{ background:#f7f7f7; padding:8px; border-radius:4px }
 .updates{ margin-top:12px }

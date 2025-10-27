@@ -45,6 +45,20 @@ async def get_tournaments(game: str = None) -> Any:
     return _fixture_data.get("tournaments", [])
 
 
+async def list_db_tournaments() -> Any:
+    """Return tournaments from the DB if present, otherwise an empty list.
+
+    This endpoint is useful once `src.db` has additional models and data.
+    """
+    try:
+        from src import db as _db
+        with _db.SessionLocal() as session:
+            rows = session.query(_db.Tournament).all()
+            return [r.to_dict() for r in rows]
+    except Exception:
+        return []
+
+
 async def get_matches() -> Any:
     # If a PandaScore token is set, prefer fetching live matches from that
     # connector. This keeps the fixture as a fallback for environments where
@@ -102,6 +116,28 @@ async def websocket_match_updates(websocket: "WebSocket", match_id: str):
             await asyncio.sleep(1.0)
     except Exception:
         await websocket.close()
+
+
+async def sse_match_updates(match_id: str):
+    """Server-Sent Events (SSE) endpoint generator for match updates.
+
+    Clients can connect with EventSource to receive JSON updates.
+    This generator polls the `store` for queued updates and yields them
+    as SSE `data:` frames.
+    """
+    # Use an async loop to poll for updates and yield SSE frames
+    try:
+        while True:
+            update = store.get_update(match_id)
+            if update is not None:
+                # SSE requires lines starting with 'data: '
+                payload = json.dumps(update)
+                yield f"data: {payload}\n\n"
+            await asyncio.sleep(1.0)
+    except asyncio.CancelledError:
+        return
+    except Exception:
+        return
 
 
 async def push_update(payload: dict) -> dict:
@@ -233,6 +269,7 @@ if FASTAPI_AVAILABLE:
         pass
     app.get("/api/games")(get_games)
     app.get("/api/tournaments")(get_tournaments)
+    app.get("/api/db/tournaments")(list_db_tournaments)
     app.get("/api/matches")(get_matches)
     app.get("/api/matches/{match_id}")(get_match)
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
@@ -259,6 +296,23 @@ if FASTAPI_AVAILABLE:
         app.post("/api/admin/push_update")(push_update)
         app.post("/api/admin/sync_matches")(admin_sync)
     app.websocket("/ws/matches/{match_id}")(websocket_match_updates)
+    # SSE endpoint for clients that prefer EventSource over WebSockets
+    # StreamingResponse may not be available on mocked fastapi.responses used
+    # by tests; import it defensively and fall back to a no-op generator
+    try:
+        from fastapi.responses import StreamingResponse as _StreamingResponse  # type: ignore
+    except Exception:
+        _StreamingResponse = None
+
+    async def _sse_endpoint(match_id: str):
+        if _StreamingResponse is not None:
+            return _StreamingResponse(sse_match_updates(match_id), media_type="text/event-stream")
+        # Fallback: return the generator directly. When FastAPI is real this
+        # path won't be used; it's only to keep imports working in tests that
+        # mock fastapi.responses.
+        return sse_match_updates(match_id)
+
+    app.get("/api/stream/matches/{match_id}")(_sse_endpoint)
 else:
     # Provide a placeholder `app` so tests that assert its existence pass.
     app = None

@@ -32,6 +32,57 @@ class Match(Base):
         return {"id": self.id, "title": self.title, "scheduled_time": self.scheduled_time}
 
 
+class Tournament(Base):
+    __tablename__ = "tournaments"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    game: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    end_date: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "game": self.game,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+        }
+
+
+class Team(Base):
+    __tablename__ = "teams"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    short_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    roster_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {"id": self.id, "name": self.name, "short_name": self.short_name}
+
+
+class Player(Base):
+    __tablename__ = "players"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    gamertag: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    team_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    role: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    stats: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "gamertag": self.gamertag,
+            "team_id": self.team_id,
+            "role": self.role,
+        }
+
+
 engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
