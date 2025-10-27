@@ -184,3 +184,7 @@ def pytest_collection_modifyitems(config, items):
         if "api" in item.keywords:
             if not os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY").startswith("sk-test"):
                 item.add_marker(skip_api)
+
+
+## NOTE: We intentionally do NOT create DB tables here automatically.
+## Tests that need DB schema should call `src.db.init_db()` explicitly.
