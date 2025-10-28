@@ -220,6 +220,56 @@ async def get_tracked() -> dict:
     return _tracked
 
 
+async def set_tracked_impl(payload: dict, admin_token: Optional[str]) -> dict:
+    """Protected setter for the tracked match/team.
+
+    Expected payload: {"match_id": "m1", "team": "Team Name"}
+    This function performs admin token validation when called via the
+    FastAPI header wrapper. A non-authenticated setter `set_tracked`
+    is provided for the test/import fallback registration.
+    """
+    if not _is_admin(admin_token):
+        return {"ok": False, "error": "admin token missing or invalid"}
+    match_id = payload.get("match_id") if payload else None
+    team = payload.get("team") if payload else None
+    if match_id:
+        _tracked["match_id"] = str(match_id)
+    if team is not None:
+        _tracked["team"] = team
+    return {"ok": True, "tracked": _tracked}
+
+
+async def set_tracked(payload: dict) -> dict:
+    """Non-authenticated setter used as a fallback when FastAPI Header
+    wrappers are not available (e.g., in tests that mock fastapi)."""
+    match_id = payload.get("match_id") if payload else None
+    team = payload.get("team") if payload else None
+    if match_id:
+        _tracked["match_id"] = str(match_id)
+    if team is not None:
+        _tracked["team"] = team
+    return {"ok": True, "tracked": _tracked}
+
+
+async def set_tracked(payload: dict, x_admin_token: Optional[str] = None) -> dict:
+    """Admin endpoint to set the tracked match/team for the demo.
+
+    Expected payload: {"match_id": "m1", "team": "Team Name"}
+    Requires X-Admin-Token header to match ADMIN_API_KEY.
+    """
+    if not _is_admin(x_admin_token):
+        return {"ok": False, "error": "admin token missing or invalid"}
+    match_id = payload.get("match_id")
+    team = payload.get("team")
+    if not match_id:
+        return {"ok": False, "error": "match_id required"}
+    _tracked["match_id"] = str(match_id)
+    _tracked["team"] = team or _tracked.get("team")
+    # push a small sync notice into the store so clients refresh metadata
+    store.push_update(str(match_id), {"type": "sync", "match_id": str(match_id), "team": _tracked.get("team")})
+    return {"ok": True, "tracked": _tracked}
+
+
 def _is_admin(token: Optional[str]) -> bool:
     """Return True if the provided token matches the ADMIN_API_KEY env var.
 
@@ -355,11 +405,18 @@ if FASTAPI_AVAILABLE:
 
         app.post("/api/admin/push_update")(push_update_endpoint)
         app.post("/api/admin/sync_matches")(admin_sync_endpoint)
+        async def set_tracked_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+            return await set_tracked_impl(payload, x_admin_token)
+
+        app.post("/api/tracked")(set_tracked_endpoint)
     except Exception:
         # If Header import or wrapper creation fails, fall back to direct
         # registration of the underlying functions.
         app.post("/api/admin/push_update")(push_update)
         app.post("/api/admin/sync_matches")(admin_sync)
+        # Expose non-auth tracked setter for test environments that don't
+        # provide Header-aware wrappers.
+        app.post("/api/tracked")(set_tracked)
     app.websocket("/ws/matches/{match_id}")(websocket_match_updates)
     # SSE endpoint for clients that prefer EventSource over WebSockets
     # StreamingResponse may not be available on mocked fastapi.responses used
@@ -380,6 +437,19 @@ if FASTAPI_AVAILABLE:
     app.get("/api/stream/matches/{match_id}")(_sse_endpoint)
     # Endpoint to let the frontend know which match/team is being auto-tracked
     app.get("/api/tracked")(get_tracked)
+    # Admin-protected endpoint to set tracked match/team
+    try:
+        from fastapi import Header  # type: ignore
+
+        async def set_tracked_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+            if not _is_admin(x_admin_token):
+                return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
+            return await set_tracked(payload, x_admin_token)
+
+        app.post("/api/tracked")(set_tracked_endpoint)
+    except Exception:
+        # Fallback: register unprotected if Header isn't available (test-only)
+        app.post("/api/tracked")(set_tracked)
 
     # Start the demo random tracker on application startup so the demo UI
     # receives live updates without manual seeding. Register the handler

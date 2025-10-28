@@ -181,6 +181,51 @@ export default function DemoPage({ matchId: initialMatchId = 'm1', matchTitle = 
         </div>
       </section>
 
+      <section className="admin-tracked" style={{marginTop:12}}>
+        <h3>Admin: set tracked match/team</h3>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <input placeholder="match_id (e.g. m1)" value={matchId} onChange={(e)=>setMatchId(e.target.value)} style={{width:160}} />
+          <input placeholder="team name (optional)" onChange={(e)=>{/* noop, optional */}} style={{flex:1}} id="tracked-team-input" />
+          <input placeholder="X-Admin-Token" value={adminToken} onChange={(e)=>setAdminToken(e.target.value)} style={{width:200}} />
+          <button onClick={async ()=>{
+            if (!adminToken) return alert('Provide admin token')
+            const teamInput = document.getElementById('tracked-team-input')
+            const payload = { match_id: matchId, team: teamInput ? teamInput.value : undefined }
+            try{
+              const res = await fetch('/api/tracked', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken }, body: JSON.stringify(payload) })
+              if (res.ok) {
+                const jd = await res.json()
+                // reflect tracked change locally
+                if (jd && jd.tracked && jd.tracked.match_id) setMatchId(jd.tracked.match_id)
+                alert('tracked updated')
+              } else {
+                const txt = await res.text()
+                alert('failed: ' + txt)
+              }
+            }catch(err){ alert('error: '+err.message) }
+          }}>Set Tracked</button>
+          <button onClick={async ()=>{
+            if (!adminToken) return alert('Provide admin token')
+            // Track the home team
+            const payload = { match_id: matchId, team: homeTeam.name }
+            try{
+              const res = await fetch('/api/tracked', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken }, body: JSON.stringify(payload) })
+              if (res.ok) { alert('Now tracking home team: ' + homeTeam.name) }
+              else { alert('failed to set tracked') }
+            }catch(err){ alert('error: '+err.message) }
+          }}>Track Home</button>
+          <button onClick={async ()=>{
+            if (!adminToken) return alert('Provide admin token')
+            const payload = { match_id: matchId, team: awayTeam.name }
+            try{
+              const res = await fetch('/api/tracked', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken }, body: JSON.stringify(payload) })
+              if (res.ok) { alert('Now tracking away team: ' + awayTeam.name) }
+              else { alert('failed to set tracked') }
+            }catch(err){ alert('error: '+err.message) }
+          }}>Track Away</button>
+        </div>
+      </section>
+
       <section className="event-list" style={{marginTop:12}}>
         <h3>Recent events</h3>
         {events.length === 0 ? (
