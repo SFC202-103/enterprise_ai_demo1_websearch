@@ -168,41 +168,83 @@ def _start_random_tracker(loop_interval: float = 3.0):
     """
     import random
     async def _bg():
-        # pick a random match and a team name from the fixtures
+        # choose an initial match from fixtures if available
         matches = _fixture_data.get("matches", []) if _fixture_data else []
-        if not matches:
-            return
-        m = random.choice(matches)
-        mid = m.get("id") or m.get("match_id") or f"m_random_{random.randint(100,999)}"
-        # try to pick a team name from common fields
-        team_name = None
-        teams = m.get("teams") or m.get("participants") or m.get("opponents") or []
-        if isinstance(teams, list) and len(teams) >= 1:
-            first = teams[0]
-            team_name = first.get("name") or first.get("title") or str(first.get("id"))
-        if not team_name:
-            # fallback to parsing title
-            title = m.get("title") or ""
-            if isinstance(title, str) and title:
-                team_name = title.split(" vs ")[0].split(" v ")[0][:30]
-        _tracked["match_id"] = str(mid)
-        _tracked["team"] = team_name or "unknown"
-
-        # push an initial base score
-        store.push_update(str(mid), {"type": "score", "home": 0, "away": 0, "timestamp": __import__('time').time()})
-
-        # provide a simple random-walk score generator
+        mid = None
         home = 0
         away = 0
+        round_no = 0
+        # helper to emit a score update
+        def emit_score(m):
+            payload = {"type": "score", "home": home, "away": away, "timestamp": __import__('time').time()}
+            store.push_update(str(m), {"match_id": str(m), "update": payload})
+
         try:
             while True:
-                # random small increments to keep it interesting
-                if random.random() < 0.6:
-                    home += random.randint(0, 2)
-                else:
-                    away += random.randint(0, 2)
-                payload = {"type": "score", "home": home, "away": away, "timestamp": __import__('time').time()}
-                store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+                # re-read tracked selection from DB if available so admin changes take effect
+                try:
+                    from src import db as _db
+
+                    sel = _db.get_tracked_selection()
+                    if sel and sel.get("match_id"):
+                        if mid != str(sel.get("match_id")):
+                            # switching tracked match resets counters
+                            mid = str(sel.get("match_id"))
+                            home = 0
+                            away = 0
+                            round_no = 0
+                        tracked_team = sel.get("team")
+                    else:
+                        tracked_team = None
+                except Exception:
+                    # no DB available — fall back to fixture-driven pick
+                    tracked_team = None
+                    if mid is None and matches:
+                        m = random.choice(matches)
+                        mid = m.get("id") or m.get("match_id") or f"m_random_{random.randint(100,999)}"
+
+                if mid is None:
+                    await asyncio.sleep(loop_interval)
+                    continue
+
+                # Start a new round occasionally
+                if random.random() < 0.3:
+                    round_no += 1
+                    payload = {"type": "round_start", "round": round_no, "timestamp": __import__('time').time()}
+                    store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+
+                # Emit a few events per tick: kills/objectives with realistic weights
+                # Kills
+                if random.random() < 0.7:
+                    killer = f"Player{random.randint(1,10)}"
+                    victim = f"Player{random.randint(11,20)}"
+                    which = "home" if random.random() < 0.5 else "away"
+                    payload = {"type": "kill", "killer": killer, "victim": victim, "team": which, "timestamp": __import__('time').time()}
+                    store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+
+                # Objective events (e.g., bomb planted, tower destroyed)
+                if random.random() < 0.2:
+                    obj = random.choice(["bomb_planted", "tower_destroyed", "flag_captured"])
+                    team = "home" if random.random() < 0.5 else "away"
+                    payload = {"type": "objective", "objective": obj, "team": team, "timestamp": __import__('time').time()}
+                    store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+
+                # Round end and score increments
+                if random.random() < 0.15:
+                    # award the round to one side
+                    if random.random() < 0.55:
+                        home += 1
+                    else:
+                        away += 1
+                    payload = {"type": "round_end", "round": round_no, "home": home, "away": away, "timestamp": __import__('time').time()}
+                    store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+                    # also emit aggregate score
+                    emit_score(mid)
+
+                # Occasionally emit a heartbeat score so frontend can update
+                if random.random() < 0.25:
+                    emit_score(mid)
+
                 await asyncio.sleep(loop_interval)
         except asyncio.CancelledError:
             return
