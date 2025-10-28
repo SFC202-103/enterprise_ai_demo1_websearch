@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7
+    container_name: esports_demo_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    restart: unless-stopped
+
+# Optional: you can add a convenience service to run tests inside a container
+# (uncomment and adapt if you want to run tests from within the compose network).
+# pytest-run: run integration tests inside the Docker network (uses the
+# `redis` service above). The command installs dependencies, waits for Redis
+# to be ready, and then runs pytest with the `integration` marker. Use
+# `docker compose run --rm pytest-run` to execute.
+pytest-run:
+  image: python:3.12
+  depends_on:
+    - redis
+  volumes:
+    - .:/workspace
+  working_dir: /workspace
+  # We install redis-tools via apt to get redis-cli for the readiness loop.
+  command: ["/bin/sh", "-c", "apt-get update && apt-get install -y redis-tools && pip install -r requirements.txt && until redis-cli -h redis ping; do echo waiting for redis; sleep 1; done; pytest -q -m integration"]
+  environment:
+    - RUN_INTEGRATION=1
+    - REDIS_URL=redis://redis:6379/0
+#
+# Usage:
+# 1) Start Redis:
+#    docker compose up -d
+# 2) Run integration tests locally (from your host):
+#    $env:RUN_INTEGRATION = '1'
+#    $env:REDIS_URL = 'redis://localhost:6379/0'
+#    pytest -q -m integration
+#
+# Or run tests inside the container (if you uncomment pytest-run):
+#    docker compose run --rm pytest-run

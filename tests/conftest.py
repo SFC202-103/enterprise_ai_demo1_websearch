@@ -153,6 +153,29 @@ def reset_environment(monkeypatch):
     # Cleanup happens automatically with monkeypatch
 
 
+@pytest.fixture(autouse=True)
+def dispose_db_after_test():
+    """Dispose SQLAlchemy engine after each test to avoid ResourceWarning
+
+    Some tests reload `src.db` or create temporary SQLite files; disposing
+    the engine after each test ensures underlying sqlite connections are
+    closed and prevents ResourceWarning messages from the test run.
+    """
+    yield
+    try:
+        import sys
+        if "src.db" in sys.modules:
+            from src import db as _db
+            try:
+                _db.engine.dispose()
+            except Exception:
+                pass
+    finally:
+        import gc
+
+        gc.collect()
+
+
 @pytest.fixture
 def mock_datetime():
     """Provide a mock datetime for consistent testing."""

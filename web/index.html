@@ -1,12 +1,1584 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Esports Demo</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esports Live Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .game-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .game-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .game-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .status-filters {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            padding: 10px 20px;
+            border: 2px solid #10b981;
+            background: white;
+            color: #10b981;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .status-btn.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-btn.upcoming {
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .status-btn.upcoming.active {
+            background: #f59e0b;
+        }
+
+        .status-btn.finished {
+            border-color: #6b7280;
+            color: #6b7280;
+        }
+
+        .status-btn.finished.active {
+            background: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .match-card.live::before {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .match-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .match-status.live {
+            background: #ef4444;
+            color: white;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .match-status.upcoming {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .match-status.finished {
+            background: #6b7280;
+            color: white;
+        }
+
+        .match-status.not_started {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .match-game {
+            font-size: 16px;
+            color: white;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .match-game.game-lol {
+            background: linear-gradient(135deg, #0397ab 0%, #0a7eba 100%);
+        }
+
+        .match-game.game-csgo {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .match-game.game-dota {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .match-game.game-valorant {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .match-game.game-overwatch {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .match-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .match-teams {
+            margin: 15px 0;
+        }
+
+        .team {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .team:last-child {
+            border-bottom: none;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .team-score {
+            font-weight: 700;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .match-time {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .match-time::before {
+            content: '🕐';
+        }
+
+        .no-matches {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            color: #6b7280;
+        }
+
+        .no-matches h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .game-filters {
+                width: 100%;
+            }
+
+            .game-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        /* Modal styles for match details */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .close {
+            color: white;
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .sentiment-section {
+            margin-top: 25px;
+        }
+
+        .sentiment-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sentiment-loading {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+        }
+
+        .sentiment-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .sentiment-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .sentiment-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .sentiment-positive {
+            color: #10b981;
+        }
+
+        .sentiment-negative {
+            color: #ef4444;
+        }
+
+        .sentiment-neutral {
+            color: #f59e0b;
+        }
+
+        .sentiment-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .sentiment-bar-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .sentiment-bar-positive {
+            background: #10b981;
+        }
+
+        .sentiment-bar-negative {
+            background: #ef4444;
+        }
+
+        .sentiment-bar-neutral {
+            background: #f59e0b;
+        }
+
+        .sentiment-description {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .match-details {
+            margin-bottom: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .detail-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .highlights-section {
+            margin-top: 25px;
+        }
+
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .highlight-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .highlight-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .highlight-thumbnail {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .highlight-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .highlight-meta {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .match-result {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .result-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .result-team {
+            flex: 1;
+            text-align: center;
+        }
+
+        .result-team.winner {
+            color: #10b981;
+        }
+
+        .result-team.loser {
+            color: #6b7280;
+        }
+
+        .result-team-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result-team-score {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        .result-vs {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Esports Live Tracker</h1>
+            <p class="subtitle">Real-time matches across all major esports</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-header">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Search for teams, matches, or tournaments...">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <select id="dataSource" style="padding: 12px 20px; border: 2px solid #667eea; border-radius: 10px; font-size: 14px; font-weight: 600; background: white; color: #667eea; cursor: pointer;">
+                        <option value="">All Sources (Aggregated)</option>
+                        <option value="pandascore">PandaScore (Multi-game)</option>
+                        <option value="opendota">OpenDota (Dota 2)</option>
+                        <option value="riot_esports">Riot Esports (LoL)</option>
+                        <option value="liquipedia">Liquipedia (Historical)</option>
+                    </select>
+                    <button class="refresh-btn" onclick="loadMatches()">↻ Refresh</button>
+                </div>
+            </div>
+
+            <div class="game-filters">
+                <button class="game-btn active" data-game="all">All Games</button>
+                <button class="game-btn" data-game="lol">League of Legends</button>
+                <button class="game-btn" data-game="csgo">CS:GO</button>
+                <button class="game-btn" data-game="dota2">Dota 2</button>
+                <button class="game-btn" data-game="valorant">Valorant</button>
+                <button class="game-btn" data-game="overwatch">Overwatch</button>
+            </div>
+
+            <div class="status-filters">
+                <button class="status-btn active" data-status="all">All Status</button>
+                <button class="status-btn" data-status="live">🔴 Live</button>
+                <button class="status-btn upcoming" data-status="upcoming">🟡 Upcoming</button>
+                <button class="status-btn finished" data-status="finished">⚪ Finished</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalMatches">-</div>
+                <div class="stat-label">Total Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liveMatches">-</div>
+                <div class="stat-label">Live Now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="upcomingMatches">-</div>
+                <div class="stat-label">Upcoming</div>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading matches...</p>
+        </div>
+
+        <div id="matchesContainer" class="matches-grid"></div>
+    </div>
+
+    <!-- Modal for match details and sentiment -->
+    <div id="matchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modalTitle" style="margin: 0;">Match Details</h2>
+            </div>
+            <div class="modal-body">
+                <div class="match-details" id="modalDetails"></div>
+                <div class="highlights-section" id="highlightsSection" style="display: none;">
+                    <div class="sentiment-title">
+                        <span>🎬</span>
+                        <span>Highlights & Clips</span>
+                    </div>
+                    <div id="highlightsContent"></div>
+                </div>
+                <div class="sentiment-section">
+                    <div class="sentiment-title">
+                        <span>💬</span>
+                        <span>General Sentiment Analysis</span>
+                    </div>
+                    <div id="sentimentContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allMatches = [];
+        let currentGame = 'all';
+        let currentStatus = 'all';
+        let searchQuery = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMatches();
+            setupEventListeners();
+            
+            // Removed auto-refresh - only manual refresh now
+        });
+
+        function setupEventListeners() {
+            // Game filter buttons
+            document.querySelectorAll('.game-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentGame = e.target.dataset.game;
+                    filterMatches();
+                });
+            });
+
+            // Status filter buttons
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentStatus = e.target.dataset.status;
+                    filterMatches();
+                });
+            });
+
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                filterMatches();
+            });
+        }
+
+        async function loadMatches() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
+
+            try {
+                // Get selected data source
+                const dataSource = document.getElementById('dataSource').value;
+                const url = dataSource ? `/api/live_matches?provider=${dataSource}` : '/api/live_matches';
+                
+                console.log('Fetching from:', url);
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                console.log('Is array?', Array.isArray(data));
+                console.log('Data length:', data?.length);
+                
+                if (data && data.length > 0) {
+                    console.log('First match sample:', data[0]);
+                }
+                
+                allMatches = Array.isArray(data) ? data : [];
+                filterMatches();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                document.getElementById('matchesContainer').innerHTML = `
+                    <div class="no-matches">
+                        <h2>❌ Error Loading Matches</h2>
+                        <p>${error.message}</p>
+                        <button class="refresh-btn" onclick="loadMatches()" style="margin-top: 20px;">Try Again</button>
+                    </div>
+                `;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function filterMatches() {
+            let filtered = allMatches;
+
+            console.log('Total matches before filtering:', filtered.length);
+            
+            // First, filter to only include our supported games
+            filtered = filtered.filter(match => {
+                const game = String(match.video_game || match.game || '').toLowerCase();
+                // Match against supported esports games
+                const supportedGames = [
+                    'league', 'lol',           // League of Legends
+                    'counter-strike', 'csgo', 'cs:go', 'cs',  // Counter-Strike
+                    'dota',                     // Dota 2
+                    'valorant',                 // Valorant
+                    'overwatch'                 // Overwatch
+                ];
+                const isSupported = supportedGames.some(g => game.includes(g));
+                if (!isSupported && game) {
+                    console.log('Filtering out unsupported game:', game, '(original:', match.video_game || match.game, ')');
+                }
+                return isSupported;
+            });
+
+            console.log('Matches after game support filter:', filtered.length);
+
+            console.log('Matches after game support filter:', filtered.length);
+
+            // Filter by specific game if selected
+            if (currentGame !== 'all') {
+                filtered = filtered.filter(match => {
+                    const game = String(match.video_game || match.game || '').toLowerCase();
+                    let matches = false;
+                    
+                    if (currentGame === 'lol') {
+                        matches = game.includes('league') || game.includes('lol');
+                    } else if (currentGame === 'csgo') {
+                        matches = game.includes('cs') || game.includes('counter');
+                    } else if (currentGame === 'dota2') {
+                        matches = game.includes('dota');
+                    } else if (currentGame === 'valorant') {
+                        matches = game.includes('valorant');
+                    } else if (currentGame === 'overwatch') {
+                        matches = game.includes('overwatch');
+                    } else {
+                        // Fallback for custom filters
+                        matches = game.includes(currentGame) || 
+                                 game.includes(currentGame.replace('_', ' ')) ||
+                                 game.includes(currentGame.replace('_', '-'));
+                    }
+                    
+                    console.log(`Checking game "${game}" against filter "${currentGame}": ${matches}`);
+                    return matches;
+                });
+                console.log('Matches after game-specific filter:', filtered.length);
+            }
+
+            // Filter by status
+            if (currentStatus !== 'all') {
+                filtered = filtered.filter(match => {
+                    const status = getMatchStatus(match);
+                    return status === currentStatus;
+                });
+            }
+
+            // Filter by search query
+            if (searchQuery) {
+                filtered = filtered.filter(match => {
+                    const searchText = JSON.stringify(match).toLowerCase();
+                    return searchText.includes(searchQuery);
+                });
+            }
+
+            displayMatches(filtered);
+        }
+
+        function getMatchStatus(match) {
+            const status = (match.status || '').toLowerCase();
+            
+            if (match.live || status === 'running' || status === 'in_progress') {
+                return 'live';
+            }
+            if (status === 'finished' || status === 'complete' || status === 'ended') {
+                return 'finished';
+            }
+            if (status === 'not_started' || status === 'scheduled' || match.scheduled_time) {
+                return 'upcoming';
+            }
+            return 'upcoming';
+        }
+
+        function displayMatches(matches) {
+            const container = document.getElementById('matchesContainer');
+
+            if (matches.length === 0) {
+                container.innerHTML = `
+                    <div class="no-matches">
+                        <h2>🔍 No Matches Found</h2>
+                        <p>Try adjusting your filters or check back later for new matches!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = matches.map(match => createMatchCard(match)).join('');
+            
+            // Add click handlers to match cards
+            document.querySelectorAll('.match-card').forEach((card, index) => {
+                card.addEventListener('click', () => showMatchDetails(matches[index]));
+            });
+        }
+
+        function createMatchCard(match) {
+            const status = getMatchStatus(match);
+            const game = formatGameName(match.video_game || match.game || 'Esports');
+            const gameClass = getGameClass(match.video_game || match.game || '');
+            const title = match.name || match.title || 'Match';
+            const teams = match.teams || match.opponents || [];
+            const time = match.scheduled_at || match.scheduled_time || match.begin_at || 'TBD';
+            const provider = match.provider || 'Unknown';
+
+            const statusClass = status;
+            const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+
+            let teamsHTML = '';
+            if (teams.length >= 2) {
+                teamsHTML = `
+                    <div class="match-teams">
+                        <div class="team">
+                            <span class="team-name">${teams[0].name || teams[0].acronym || 'Team 1'}</span>
+                            <span class="team-score">${teams[0].score || '-'}</span>
+                        </div>
+                        <div class="team">
+                            <span class="team-name">${teams[1].name || teams[1].acronym || 'Team 2'}</span>
+                            <span class="team-score">${teams[1].score || '-'}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (teams.length > 0) {
+                teamsHTML = `
+                    <div class="match-teams">
+                        ${teams.map(team => `
+                            <div class="team">
+                                <span class="team-name">${team.name || team.acronym || 'Team'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            const formattedTime = new Date(time).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="match-card ${statusClass}" data-match-id="${match.id || ''}">
+                    <div class="match-game ${gameClass}">${game}</div>
+                    <span class="match-status ${statusClass}">${statusLabel}</span>
+                    <div class="match-title">${title}</div>
+                    ${teamsHTML}
+                    <div class="match-time">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</div>
+                    <div class="match-provider" style="margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: right;">
+                        📡 ${provider}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getGameClass(game) {
+            const gameString = String(game).toLowerCase();
+            
+            if (gameString.includes('lol') || gameString.includes('league')) {
+                return 'game-lol';
+            }
+            if (gameString.includes('csgo') || gameString.includes('cs:go') || gameString.includes('counter-strike') || gameString.includes('counter')) {
+                return 'game-csgo';
+            }
+            if (gameString.includes('dota')) {
+                return 'game-dota';
+            }
+            if (gameString.includes('valorant')) {
+                return 'game-valorant';
+            }
+            if (gameString.includes('overwatch')) {
+                return 'game-overwatch';
+            }
+            
+            return '';
+        }
+
+        function formatGameName(game) {
+            const gameString = String(game).toLowerCase();
+            
+            // Map common game names to full display names
+            const gameMap = {
+                'lol': '🎮 League of Legends',
+                'league': '🎮 League of Legends',
+                'league-of-legends': '🎮 League of Legends',
+                'csgo': '🔫 Counter-Strike: GO',
+                'cs:go': '🔫 Counter-Strike: GO',
+                'counter-strike': '🔫 Counter-Strike: GO',
+                'cs': '🔫 Counter-Strike: GO',
+                'dota2': '⚔️ Dota 2',
+                'dota 2': '⚔️ Dota 2',
+                'dota': '⚔️ Dota 2',
+                'valorant': '💥 Valorant',
+                'overwatch': '🦸 Overwatch',
+                'ow': '🦸 Overwatch'
+            };
+            
+            for (const [key, value] of Object.entries(gameMap)) {
+                if (gameString.includes(key)) {
+                    return value;
+                }
+            }
+            
+            // If no exact match, try to format nicely
+            // Handle "Counter-Strike" case specifically
+            if (gameString.includes('counter')) {
+                return '🔫 Counter-Strike: GO';
+            }
+            
+            // Capitalize first letter of each word if no match
+            return game.toString().split(/[-_\s]/).map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function showMatchDetails(match) {
+            const modal = document.getElementById('matchModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDetails = document.getElementById('modalDetails');
+            const sentimentContent = document.getElementById('sentimentContent');
+            const highlightsSection = document.getElementById('highlightsSection');
+            const highlightsContent = document.getElementById('highlightsContent');
+            
+            // Set title
+            modalTitle.textContent = match.name || match.title || 'Match Details';
+            
+            // Build details
+            const game = formatGameName(match.video_game || match.game || 'Esports');
+            const status = getMatchStatus(match);
+            const teams = match.teams || match.opponents || [];
+            const time = match.scheduled_at || match.scheduled_time || match.begin_at || 'TBD';
+            const formattedTime = new Date(time).toLocaleString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let detailsHTML = '';
+            
+            // For finished matches, show result prominently
+            if (status === 'finished' && teams.length >= 2) {
+                const team1Score = parseInt(teams[0].score) || 0;
+                const team2Score = parseInt(teams[1].score) || 0;
+                const team1Won = team1Score > team2Score;
+                const team2Won = team2Score > team1Score;
+                
+                detailsHTML += `
+                    <div class="match-result">
+                        <div class="result-title">Final Result</div>
+                        <div class="result-teams">
+                            <div class="result-team ${team1Won ? 'winner' : team2Won ? 'loser' : ''}">
+                                <div class="result-team-name">${teams[0].name || teams[0].acronym || 'Team 1'}</div>
+                                <div class="result-team-score">${team1Score}</div>
+                                ${team1Won ? '<div style="font-size: 24px;">🏆</div>' : ''}
+                            </div>
+                            <div class="result-vs">VS</div>
+                            <div class="result-team ${team2Won ? 'winner' : team1Won ? 'loser' : ''}">
+                                <div class="result-team-name">${teams[1].name || teams[1].acronym || 'Team 2'}</div>
+                                <div class="result-team-score">${team2Score}</div>
+                                ${team2Won ? '<div style="font-size: 24px;">🏆</div>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detailsHTML += `
+                <div class="detail-row">
+                    <span class="detail-label">Game:</span>
+                    <span class="detail-value">${game}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Scheduled:</span>
+                    <span class="detail-value">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</span>
+                </div>
+            `;
+            
+            if (teams.length >= 2 && status !== 'finished') {
+                detailsHTML += `
+                    <div class="detail-row">
+                        <span class="detail-label">Team 1:</span>
+                        <span class="detail-value">${teams[0].name || teams[0].acronym || 'Team 1'} ${teams[0].score ? `(${teams[0].score})` : ''}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Team 2:</span>
+                        <span class="detail-value">${teams[1].name || teams[1].acronym || 'Team 2'} ${teams[1].score ? `(${teams[1].score})` : ''}</span>
+                    </div>
+                `;
+            }
+            
+            modalDetails.innerHTML = detailsHTML;
+            
+            // Show highlights section for finished and live matches
+            if (status === 'finished' || status === 'live') {
+                highlightsSection.style.display = 'block';
+                loadHighlights(match, status);
+            } else {
+                highlightsSection.style.display = 'none';
+            }
+            
+            // Load sentiment analysis
+            loadSentiment(match);
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        function loadHighlights(match, status) {
+            const highlightsContent = document.getElementById('highlightsContent');
+            const teams = match.teams || match.opponents || [];
+            const game = (match.video_game || match.game || '').toLowerCase();
+            
+            // Generate mock highlights based on match data
+            const highlights = generateHighlights(match, status, teams, game);
+            
+            if (highlights.length === 0) {
+                highlightsContent.innerHTML = `
+                    <div class="sentiment-description" style="text-align: center; padding: 20px;">
+                        No highlights available yet. Check back after the match concludes!
+                    </div>
+                `;
+                return;
+            }
+            
+            highlightsContent.innerHTML = `
+                <div class="highlights-grid">
+                    ${highlights.map(highlight => `
+                        <div class="highlight-card" onclick="alert('This would open: ${highlight.title}')">
+                            <div class="highlight-thumbnail">${highlight.emoji}</div>
+                            <div class="highlight-title">${highlight.title}</div>
+                            <div class="highlight-meta">${highlight.meta}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function generateHighlights(match, status, teams, game) {
+            const highlights = [];
+            
+            if (status === 'finished') {
+                // Generate highlights for finished matches
+                const team1 = teams[0]?.name || teams[0]?.acronym || 'Team 1';
+                const team2 = teams[1]?.name || teams[1]?.acronym || 'Team 2';
+                
+                highlights.push({
+                    emoji: '🎬',
+                    title: 'Full Match Recap',
+                    meta: 'Complete game highlights'
+                });
+                
+                highlights.push({
+                    emoji: '🔥',
+                    title: 'Best Plays',
+                    meta: 'Top 5 moments'
+                });
+                
+                highlights.push({
+                    emoji: '⚡',
+                    title: `${team1} Key Plays`,
+                    meta: 'Team highlights'
+                });
+                
+                highlights.push({
+                    emoji: '💥',
+                    title: `${team2} Key Plays`,
+                    meta: 'Team highlights'
+                });
+                
+                if (game.includes('lol') || game.includes('league')) {
+                    highlights.push({
+                        emoji: '🐉',
+                        title: 'Baron/Dragon Fights',
+                        meta: 'Objective control'
+                    });
+                    highlights.push({
+                        emoji: '🎯',
+                        title: 'Pentakills & Outplays',
+                        meta: 'Individual plays'
+                    });
+                } else if (game.includes('csgo') || game.includes('counter-strike')) {
+                    highlights.push({
+                        emoji: '💣',
+                        title: 'Clutch Moments',
+                        meta: '1v3+ situations'
+                    });
+                    highlights.push({
+                        emoji: '🎯',
+                        title: 'Ace Rounds',
+                        meta: 'Single player eliminations'
+                    });
+                } else if (game.includes('dota')) {
+                    highlights.push({
+                        emoji: '🛡️',
+                        title: 'Teamfight Breakdown',
+                        meta: 'Major engagements'
+                    });
+                    highlights.push({
+                        emoji: '🏰',
+                        title: 'Base Defense',
+                        meta: 'Critical moments'
+                    });
+                } else if (game.includes('valorant')) {
+                    highlights.push({
+                        emoji: '🎯',
+                        title: 'Spike Rush Highlights',
+                        meta: 'Clutch defuses'
+                    });
+                    highlights.push({
+                        emoji: '⚡',
+                        title: 'Ability Combos',
+                        meta: 'Ultimate plays'
+                    });
+                } else if (game.includes('overwatch')) {
+                    highlights.push({
+                        emoji: '🦸',
+                        title: 'Play of the Game',
+                        meta: 'Best moments'
+                    });
+                    highlights.push({
+                        emoji: '🎮',
+                        title: 'Ultimate Combos',
+                        meta: 'Team coordination'
+                    });
+                }
+                
+                highlights.push({
+                    emoji: '📊',
+                    title: 'Post-Match Analysis',
+                    meta: 'Stats & breakdown'
+                });
+                
+                highlights.push({
+                    emoji: '🎤',
+                    title: 'Player Interviews',
+                    meta: 'Post-game reactions'
+                });
+                
+            } else if (status === 'live') {
+                // Generate highlights for live matches
+                highlights.push({
+                    emoji: '🔴',
+                    title: 'Watch Live',
+                    meta: 'Stream currently active'
+                });
+                
+                highlights.push({
+                    emoji: '⚡',
+                    title: 'Live Updates',
+                    meta: 'Real-time coverage'
+                });
+                
+                highlights.push({
+                    emoji: '💬',
+                    title: 'Live Chat',
+                    meta: 'Join the discussion'
+                });
+            }
+            
+            return highlights;
+        }
+
+        async function loadSentiment(match) {
+            const sentimentContent = document.getElementById('sentimentContent');
+            sentimentContent.innerHTML = `
+                <div class="sentiment-loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing sentiment...</p>
+                </div>
+            `;
+            
+            try {
+                // Generate sentiment based on match data
+                const sentiment = generateSentiment(match);
+                
+                sentimentContent.innerHTML = `
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">Overall Sentiment</div>
+                        <div class="sentiment-value sentiment-${sentiment.overall.toLowerCase()}">${sentiment.overall}</div>
+                        <div class="sentiment-bar">
+                            <div class="sentiment-bar-fill sentiment-bar-${sentiment.overall.toLowerCase()}" 
+                                 style="width: ${sentiment.confidence}%"></div>
+                        </div>
+                        <div class="sentiment-description">${sentiment.description}</div>
+                    </div>
+                    
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">Fan Excitement</div>
+                        <div class="sentiment-bar">
+                            <div class="sentiment-bar-fill sentiment-bar-positive" 
+                                 style="width: ${sentiment.excitement}%"></div>
+                        </div>
+                        <div class="sentiment-description">
+                            ${sentiment.excitement}% excitement level - ${sentiment.excitementText}
+                        </div>
+                    </div>
+                    
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">Match Importance</div>
+                        <div class="sentiment-bar">
+                            <div class="sentiment-bar-fill sentiment-bar-neutral" 
+                                 style="width: ${sentiment.importance}%"></div>
+                        </div>
+                        <div class="sentiment-description">
+                            ${sentiment.importanceText}
+                        </div>
+                    </div>
+                    
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">Community Buzz</div>
+                        <div class="sentiment-description" style="margin-top: 10px;">
+                            ${sentiment.buzzPoints.map(point => `• ${point}`).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error generating sentiment:', error);
+                sentimentContent.innerHTML = `
+                    <div class="sentiment-card">
+                        <div class="sentiment-description" style="color: #ef4444;">
+                            ❌ Unable to generate sentiment analysis at this time.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateSentiment(match) {
+            const status = getMatchStatus(match);
+            const teams = match.teams || match.opponents || [];
+            const game = (match.video_game || match.game || '').toLowerCase();
+            const title = (match.name || match.title || '').toLowerCase();
+            
+            // Determine sentiment based on match characteristics
+            let overall = 'Neutral';
+            let confidence = 70;
+            let description = 'Fans are moderately interested in this matchup.';
+            let excitement = 60;
+            let excitementText = 'Moderate anticipation';
+            let importance = 50;
+            let importanceText = 'Regular season match';
+            let buzzPoints = [];
+            
+            // Finished matches have post-game analysis sentiment
+            if (status === 'finished') {
+                overall = 'Positive';
+                confidence = 80;
+                excitement = 65;
+                excitementText = 'Post-match discussion active';
+                
+                if (teams.length >= 2) {
+                    const team1Score = parseInt(teams[0].score) || 0;
+                    const team2Score = parseInt(teams[1].score) || 0;
+                    const winner = team1Score > team2Score ? (teams[0].name || teams[0].acronym) : (teams[1].name || teams[1].acronym);
+                    
+                    if (Math.abs(team1Score - team2Score) <= 1) {
+                        overall = 'Positive';
+                        confidence = 90;
+                        excitement = 85;
+                        excitementText = 'Close match! High community engagement';
+                        description = `What a thriller! Fans are buzzing about this incredibly close match. ${winner} pulled off a narrow victory!`;
+                        buzzPoints.push(`Close match: ${team1Score}-${team2Score}`);
+                        buzzPoints.push('Nail-biting finish');
+                        buzzPoints.push('High-quality gameplay');
+                    } else if (Math.abs(team1Score - team2Score) >= 3) {
+                        description = `Dominant performance by ${winner}! Fans discussing the one-sided result.`;
+                        buzzPoints.push(`Decisive victory: ${team1Score}-${team2Score}`);
+                        buzzPoints.push('One team outclassed the other');
+                    } else {
+                        description = `${winner} takes the win! Fans analyzing the key moments and standout plays.`;
+                        buzzPoints.push(`Final score: ${team1Score}-${team2Score}`);
+                        buzzPoints.push('Competitive match overall');
+                    }
+                    
+                    buzzPoints.push('Highlights and VODs available');
+                    buzzPoints.push('Player performance stats out');
+                    buzzPoints.push('Community analyzing key plays');
+                }
+            } 
+            // Live matches generate more excitement
+            else if (status === 'live') {
+                overall = 'Positive';
+                confidence = 85;
+                excitement = 90;
+                excitementText = 'High energy - match is happening now!';
+                description = 'Fans are very excited! The match is currently live with active gameplay.';
+                buzzPoints.push('Match currently in progress');
+                buzzPoints.push('Real-time updates available');
+                buzzPoints.push('Live chat highly active');
+            } 
+            // Upcoming matches
+            else if (status === 'upcoming') {
+                excitement = 75;
+                excitementText = 'Growing anticipation';
+                description = 'Fans are looking forward to this upcoming matchup.';
+                buzzPoints.push('Scheduled for upcoming play');
+                buzzPoints.push('Pre-match predictions trending');
+            }
+            
+            // Championship/playoff matches are more important
+            if (title.includes('final') || title.includes('championship') || title.includes('playoff')) {
+                overall = 'Positive';
+                confidence = 95;
+                excitement = Math.min(excitement + 20, 100);
+                importance = 95;
+                importanceText = 'High stakes championship match';
+                
+                if (status === 'finished') {
+                    description = 'Championship concluded! Massive community engagement with the results and highlights.';
+                } else {
+                    description = 'Major tournament match! Fans are highly engaged and excited.';
+                }
+                buzzPoints.push('Championship stakes');
+                buzzPoints.push('High community engagement');
+            } else if (title.includes('semifinal') || title.includes('quarter')) {
+                importance = 80;
+                importanceText = 'Playoff elimination match';
+                buzzPoints.push('Elimination round');
+            } else if (title.includes('worlds') || title.includes('international')) {
+                importance = 90;
+                importanceText = 'International competition';
+                buzzPoints.push('International event');
+            }
+            
+            // Popular games generate more buzz
+            const popularGames = ['lol', 'league', 'csgo', 'dota', 'valorant'];
+            if (popularGames.some(g => game.includes(g))) {
+                buzzPoints.push('Popular esport title');
+                excitement = Math.min(excitement + 10, 100);
+            }
+            
+            // Check for team rivalry or popular teams
+            if (teams.length >= 2) {
+                const team1 = (teams[0].name || teams[0].acronym || '').toLowerCase();
+                const team2 = (teams[1].name || teams[1].acronym || '').toLowerCase();
+                
+                const famousTeams = ['t1', 'g2', 'fnatic', 'cloud9', 'tsm', 'liquid', 'faze', 'navi', 'sentinels'];
+                if (famousTeams.some(t => team1.includes(t) || team2.includes(t))) {
+                    buzzPoints.push('Popular team competing');
+                    excitement = Math.min(excitement + 15, 100);
+                    overall = 'Positive';
+                }
+                
+                buzzPoints.push(`${teams[0].name || teams[0].acronym} vs ${teams[1].name || teams[1].acronym}`);
+            }
+            
+            // Add score discussion if available
+            if (teams.length >= 2 && (teams[0].score || teams[1].score)) {
+                if (status !== 'finished') {
+                    buzzPoints.push('Live score updates');
+                }
+            }
+            
+            // Ensure we have at least some buzz points
+            if (buzzPoints.length === 0) {
+                buzzPoints.push('Community watching closely');
+                buzzPoints.push('Standard competitive match');
+            }
+            
+            return {
+                overall,
+                confidence,
+                description,
+                excitement,
+                excitementText,
+                importance,
+                importanceText,
+                buzzPoints
+            };
+        }
+
+        function closeModal() {
+            document.getElementById('matchModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('matchModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        function updateStats() {
+            const total = allMatches.length;
+            const live = allMatches.filter(m => getMatchStatus(m) === 'live').length;
+            const upcoming = allMatches.filter(m => getMatchStatus(m) === 'upcoming').length;
+
+            document.getElementById('totalMatches').textContent = total;
+            document.getElementById('liveMatches').textContent = live;
+            document.getElementById('upcomingMatches').textContent = upcoming;
+        }
+    </script>
+</body>
 </html>

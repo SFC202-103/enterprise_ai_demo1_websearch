@@ -56,4 +56,6 @@ def main(argv: Optional[list[str]] = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # Running as a script should exit with the main return code. Exclude
+    # this path from coverage since tests exercise `main()` directly.
+    raise SystemExit(main())  # pragma: no cover

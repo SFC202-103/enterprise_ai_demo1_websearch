@@ -105,13 +105,35 @@ class PandaScoreConnector:
             teams = []
             for team in item.get("opponents") or []:
                 t = team.get("opponent") or {}
-                teams.append({"id": t.get("id"), "name": t.get("name")})
+                # Get score from the results
+                results = item.get("results") or []
+                score = None
+                if results and len(results) > len(teams):
+                    result = results[len(teams)]
+                    score = result.get("score") if isinstance(result, dict) else None
+                
+                teams.append({
+                    "id": t.get("id"), 
+                    "name": t.get("name"),
+                    "acronym": t.get("acronym"),
+                    "score": score
+                })
+
+            # Extract video game information
+            video_game_data = item.get("videogame") or item.get("video_game") or {}
+            video_game_name = video_game_data.get("name") if isinstance(video_game_data, dict) else str(video_game_data) if video_game_data else None
 
             normalized.append({
                 "id": match_id,
                 "title": title,
                 "scheduled_time": scheduled,
+                # PandaScore returns a status field like "running", "finished",
+                # include it when present so callers can filter by status.
+                "status": item.get("status"),
                 "teams": teams,
+                "video_game": video_game_name,
+                "game": video_game_name,
+                "provider": "PandaScore",
             })
 
         return normalized

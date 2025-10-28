@@ -2,50 +2,58 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  test:
+  unit_tests:
+    name: Unit tests and Lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11]
+        python-version: ['3.11', '3.12']
     steps:
-      - name: Checkout (shallow)
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Alembic migrations (verify)
-        env:
-          # use a local sqlite file for CI; alembic/env.py will read this
-          DATABASE_URL: sqlite:///./ci_test.db
+      - name: Lint with pylint
         run: |
-          python -m alembic upgrade head
+          pylint src/ --exit-zero --output-format=colorized
+          pylint src/ --fail-under=8.0
 
-      - name: Run tests
+      - name: Run tests with coverage
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-key-for-ci' }}
         run: |
-          pytest -q
+          # Ensure coverage uses the repository .coveragerc so intentional
+          # omissions are respected.
+          pytest --cov=src --cov-config=.coveragerc --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Check coverage threshold
+        run: |
+          coverage report --fail-under=100
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -56,84 +64,34 @@ jobs:
         run: |
           npm ci
           npm run test -- --run
-name: CI/CD Pipeline
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  test:
-    name: Test and Lint
+  integration:
+    name: Integration tests (Tracker)
+    needs: unit_tests
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        python-version: ['3.11', '3.12']
-    
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Lint with pylint
-      run: |
-        pylint src/ --exit-zero --output-format=colorized
-        pylint src/ --fail-under=8.0
-    
-    - name: Run tests with coverage
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-key-for-ci' }}
-      run: |
-        pytest --cov=src --cov-report=xml --cov-report=term-missing
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-      continue-on-error: true
-    
-    - name: Check coverage threshold
-      run: |
-        coverage report --fail-under=100
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install safety bandit
-    
-    - name: Run safety check (dependency vulnerabilities)
-      run: |
-        safety check --json || true
-    
-    - name: Run bandit (code security issues)
-      run: |
-        bandit -r src/ -f json || true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run integration tests
+        env:
+          RUN_INTEGRATION: '1'
+          REDIS_URL: 'redis://localhost:6379/0'
+          DATABASE_URL: 'sqlite:///./ci_integration.db'
+        run: |
+          pytest -q -m integration

@@ -89,6 +89,9 @@ class RiotConnector:
                 "id": match_id,
                 "title": title,
                 "scheduled_time": scheduled,
+                # Riot may expose various status/state fields; include a best-effort
+                # status value when present so callers can filter by live/upcoming.
+                "status": item.get("status") or item.get("state"),
                 "teams": teams,
             })
 

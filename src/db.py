@@ -94,6 +94,29 @@ class TrackedSelection(Base):
         return {"id": self.id, "match_id": self.match_id, "team": self.team}
 
 
+class TrackedState(Base):
+    __tablename__ = "tracked_state"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_id: Mapped[Optional[str]] = mapped_column(String, nullable=False)
+    home: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    away: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    round: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_run: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    leader_pid: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "match_id": self.match_id,
+            "home": self.home,
+            "away": self.away,
+            "round": self.round,
+            "last_run": self.last_run,
+            "leader_pid": self.leader_pid,
+        }
+
+
 engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
@@ -116,6 +139,23 @@ def set_tracked_selection(match_id: Optional[str], team: Optional[str]) -> Dict:
     """Persist a new tracked selection and return it."""
     with SessionLocal() as session:
         inst = TrackedSelection(match_id=str(match_id) if match_id else None, team=team)
+        session.add(inst)
+        session.commit()
+        session.refresh(inst)
+        return inst.to_dict()
+
+
+def get_tracked_state(match_id: str) -> Dict:
+    with SessionLocal() as session:
+        row = session.query(TrackedState).filter(TrackedState.match_id == str(match_id)).order_by(TrackedState.id.desc()).first()
+        if not row:
+            return {}
+        return row.to_dict()
+
+
+def set_tracked_state(match_id: str, home: int, away: int, round_no: int, last_run: Optional[str], leader_pid: Optional[str]) -> Dict:
+    with SessionLocal() as session:
+        inst = TrackedState(match_id=str(match_id), home=home, away=away, round=round_no, last_run=last_run, leader_pid=leader_pid)
         session.add(inst)
         session.commit()
         session.refresh(inst)
