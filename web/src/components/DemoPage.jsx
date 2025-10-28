@@ -1,7 +1,8 @@
 import React, { useMemo, useEffect, useState } from 'react'
 import useEventSource from '../hooks/useEventSource'
 
-export default function DemoPage({ matchId = 'm1', matchTitle = 'Demo Match' }) {
+export default function DemoPage({ matchId: initialMatchId = 'm1', matchTitle = 'Demo Match' }) {
+  const [matchId, setMatchId] = React.useState(initialMatchId)
   const sseUrl = `/api/stream/matches/${encodeURIComponent(matchId)}`
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const wsUrl = `${wsProtocol}://${window.location.host}/ws/matches/${encodeURIComponent(matchId)}`
@@ -26,6 +27,18 @@ export default function DemoPage({ matchId = 'm1', matchTitle = 'Demo Match' }) 
   useEffect(() => {
     let cancelled = false
     async function fetchMeta() {
+      // discover tracked match first
+      try {
+        const t = await fetch('/api/tracked')
+        if (t.ok) {
+          const td = await t.json()
+          if (td && td.match_id) {
+            setMatchId(td.match_id)
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
       try {
         const res = await fetch(`/api/matches/${encodeURIComponent(matchId)}`)
         if (!res.ok) return

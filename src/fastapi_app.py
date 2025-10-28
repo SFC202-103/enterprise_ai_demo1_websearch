@@ -155,6 +155,71 @@ async def push_update(payload: dict) -> dict:
     return {"ok": True}
 
 
+# Track a random team/match on startup for demo purposes. We store a small
+# dict in-memory with the tracked match id and team name and provide a
+# lightweight endpoint so the frontend can discover what is being tracked.
+_tracked: dict = {"match_id": None, "team": None}
+
+
+def _start_random_tracker(loop_interval: float = 3.0):
+    """Start a background thread that pushes periodic random score updates
+    for a randomly selected match from the fixture data. This keeps the
+    demo UI lively without requiring manual seeding.
+    """
+    import random
+    async def _bg():
+        # pick a random match and a team name from the fixtures
+        matches = _fixture_data.get("matches", []) if _fixture_data else []
+        if not matches:
+            return
+        m = random.choice(matches)
+        mid = m.get("id") or m.get("match_id") or f"m_random_{random.randint(100,999)}"
+        # try to pick a team name from common fields
+        team_name = None
+        teams = m.get("teams") or m.get("participants") or m.get("opponents") or []
+        if isinstance(teams, list) and len(teams) >= 1:
+            first = teams[0]
+            team_name = first.get("name") or first.get("title") or str(first.get("id"))
+        if not team_name:
+            # fallback to parsing title
+            title = m.get("title") or ""
+            if isinstance(title, str) and title:
+                team_name = title.split(" vs ")[0].split(" v ")[0][:30]
+        _tracked["match_id"] = str(mid)
+        _tracked["team"] = team_name or "unknown"
+
+        # push an initial base score
+        store.push_update(str(mid), {"type": "score", "home": 0, "away": 0, "timestamp": __import__('time').time()})
+
+        # provide a simple random-walk score generator
+        home = 0
+        away = 0
+        try:
+            while True:
+                # random small increments to keep it interesting
+                if random.random() < 0.6:
+                    home += random.randint(0, 2)
+                else:
+                    away += random.randint(0, 2)
+                payload = {"type": "score", "home": home, "away": away, "timestamp": __import__('time').time()}
+                store.push_update(str(mid), {"match_id": str(mid), "update": payload})
+                await asyncio.sleep(loop_interval)
+        except asyncio.CancelledError:
+            return
+
+    # schedule the background task
+    try:
+        asyncio.create_task(_bg())
+    except Exception:
+        # If event loop isn't running yet (e.g., tests), just ignore.
+        pass
+
+
+async def get_tracked() -> dict:
+    """Return the currently tracked match/team for demo purposes."""
+    return _tracked
+
+
 def _is_admin(token: Optional[str]) -> bool:
     """Return True if the provided token matches the ADMIN_API_KEY env var.
 
@@ -313,6 +378,33 @@ if FASTAPI_AVAILABLE:
         return sse_match_updates(match_id)
 
     app.get("/api/stream/matches/{match_id}")(_sse_endpoint)
+    # Endpoint to let the frontend know which match/team is being auto-tracked
+    app.get("/api/tracked")(get_tracked)
+
+    # Start the demo random tracker on application startup so the demo UI
+    # receives live updates without manual seeding. Register the handler
+    # defensively because unit tests may provide a minimal DummyApp that
+    # doesn't implement `on_event`.
+    def _register_startup():
+        try:
+            if hasattr(app, "on_event"):
+                @app.on_event("startup")
+                async def _on_startup():
+                    try:
+                        _start_random_tracker(loop_interval=3.0)
+                    except Exception:
+                        pass
+            elif hasattr(app, "add_event_handler"):
+                # older FastAPI/Starlette API
+                try:
+                    app.add_event_handler("startup", lambda: _start_random_tracker(loop_interval=3.0))
+                except Exception:
+                    pass
+        except Exception:
+            # If registration fails in test environments, ignore.
+            pass
+
+    _register_startup()
 else:
     # Provide a placeholder `app` so tests that assert its existence pass.
     app = None
