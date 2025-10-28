@@ -217,6 +217,15 @@ def _start_random_tracker(loop_interval: float = 3.0):
 
 async def get_tracked() -> dict:
     """Return the currently tracked match/team for demo purposes."""
+    # Prefer DB-backed tracked selection when available
+    try:
+        from src import db as _db
+
+        row = _db.get_tracked_selection()
+        if row:
+            return {"match_id": row.get("match_id"), "team": row.get("team")}
+    except Exception:
+        pass
     return _tracked
 
 
@@ -232,11 +241,18 @@ async def set_tracked_impl(payload: dict, admin_token: Optional[str]) -> dict:
         return {"ok": False, "error": "admin token missing or invalid"}
     match_id = payload.get("match_id") if payload else None
     team = payload.get("team") if payload else None
-    if match_id:
-        _tracked["match_id"] = str(match_id)
-    if team is not None:
-        _tracked["team"] = team
-    return {"ok": True, "tracked": _tracked}
+    try:
+        from src import db as _db
+
+        tracked = _db.set_tracked_selection(match_id, team)
+        return {"ok": True, "tracked": tracked}
+    except Exception:
+        # Fall back to in-memory behavior
+        if match_id:
+            _tracked["match_id"] = str(match_id)
+        if team is not None:
+            _tracked["team"] = team
+        return {"ok": True, "tracked": _tracked}
 
 
 async def set_tracked(payload: dict) -> dict:
@@ -244,11 +260,17 @@ async def set_tracked(payload: dict) -> dict:
     wrappers are not available (e.g., in tests that mock fastapi)."""
     match_id = payload.get("match_id") if payload else None
     team = payload.get("team") if payload else None
-    if match_id:
-        _tracked["match_id"] = str(match_id)
-    if team is not None:
-        _tracked["team"] = team
-    return {"ok": True, "tracked": _tracked}
+    try:
+        from src import db as _db
+
+        tracked = _db.set_tracked_selection(match_id, team)
+        return {"ok": True, "tracked": tracked}
+    except Exception:
+        if match_id:
+            _tracked["match_id"] = str(match_id)
+        if team is not None:
+            _tracked["team"] = team
+        return {"ok": True, "tracked": _tracked}
 
 
 async def set_tracked(payload: dict, x_admin_token: Optional[str] = None) -> dict:

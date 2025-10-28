@@ -83,6 +83,17 @@ class Player(Base):
         }
 
 
+class TrackedSelection(Base):
+    __tablename__ = "tracked_selection"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    match_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    team: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {"id": self.id, "match_id": self.match_id, "team": self.team}
+
+
 engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
@@ -90,6 +101,25 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 def init_db() -> None:
     """Create tables (idempotent)."""
     Base.metadata.create_all(bind=engine)
+
+
+def get_tracked_selection() -> Dict:
+    """Return the latest tracked selection row as a dict, or an empty dict."""
+    with SessionLocal() as session:
+        row = session.query(TrackedSelection).order_by(TrackedSelection.id.desc()).first()
+        if not row:
+            return {}
+        return row.to_dict()
+
+
+def set_tracked_selection(match_id: Optional[str], team: Optional[str]) -> Dict:
+    """Persist a new tracked selection and return it."""
+    with SessionLocal() as session:
+        inst = TrackedSelection(match_id=str(match_id) if match_id else None, team=team)
+        session.add(inst)
+        session.commit()
+        session.refresh(inst)
+        return inst.to_dict()
 
 
 def save_matches(matches: List[Dict]) -> int:
