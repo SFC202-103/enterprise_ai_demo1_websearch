@@ -64,7 +64,6 @@ async def get_matches() -> Any:
     # connector. This keeps the fixture as a fallback for environments where
     # no API key is configured (e.g., tests).
     try:
-        import os
         token = os.getenv("PANDASCORE_TOKEN")
         if token:
             from src.connectors.pandascore_connector import PandaScoreConnector
@@ -174,7 +173,7 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
             conn = RiotEsportsConnector()
             try:
                 key = f"riot_esports:{game or 'lol'}:{status or ''}"
-                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
                 all_matches.extend(matches)
             except Exception:
                 pass
@@ -190,7 +189,7 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
             conn = OpenDotaConnector()
             try:
                 key = f"opendota:{game or 'dota2'}:{status or ''}"
-                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
                 all_matches.extend(matches)
             except Exception:
                 pass
@@ -361,12 +360,11 @@ def _start_random_tracker(loop_interval: float = 3.0):  # pragma: no cover
                             home = 0
                             away = 0
                             round_no = 0
-                        tracked_team = sel.get("team")
+                        # tracked_team = sel.get("team")  # Not currently used
                     else:
-                        tracked_team = None
+                        pass  # tracked_team = None
                 except Exception:
                     # no DB available — fall back to fixture-driven pick
-                    tracked_team = None
                     if mid is None and matches:
                         m = random.choice(matches)
                         mid = m.get("id") or m.get("match_id") or f"m_random_{random.randint(100,999)}"
@@ -481,25 +479,6 @@ async def set_tracked(payload: dict) -> dict:
         if team is not None:
             _tracked["team"] = team
         return {"ok": True, "tracked": _tracked}
-
-
-async def set_tracked(payload: dict, x_admin_token: Optional[str] = None) -> dict:
-    """Admin endpoint to set the tracked match/team for the demo.
-
-    Expected payload: {"match_id": "m1", "team": "Team Name"}
-    Requires X-Admin-Token header to match ADMIN_API_KEY.
-    """
-    if not _is_admin(x_admin_token):
-        return {"ok": False, "error": "admin token missing or invalid"}
-    match_id = payload.get("match_id")
-    team = payload.get("team")
-    if not match_id:
-        return {"ok": False, "error": "match_id required"}
-    _tracked["match_id"] = str(match_id)
-    _tracked["team"] = team or _tracked.get("team")
-    # push a small sync notice into the store so clients refresh metadata
-    store.push_update(str(match_id), {"type": "sync", "match_id": str(match_id), "team": _tracked.get("team")})
-    return {"ok": True, "tracked": _tracked}
 
 
 def _is_admin(token: Optional[str]) -> bool:
@@ -728,29 +707,8 @@ if FASTAPI_AVAILABLE:
     app.get("/api/stream/matches/{match_id}")(_sse_endpoint)
     # Endpoint to let the frontend know which match/team is being auto-tracked
     app.get("/api/tracked")(get_tracked)
-    # Admin-protected endpoint to set tracked match/team
-    try:
-        from fastapi import Header  # type: ignore
-
-        async def set_tracked_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):  # pragma: no cover
-            if not _is_admin(x_admin_token):  # pragma: no cover
-                return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
-            return await set_tracked(payload, x_admin_token)  # pragma: no cover
-
-        app.post("/api/tracked")(set_tracked_endpoint)
-    except Exception:
-        # Fallback: register unprotected if Header isn't available (test-only)
-        app.post("/api/tracked")(set_tracked)
-
-    # Start the demo random tracker on application startup so the demo UI
-    # receives live updates without manual seeding. Register the handler
-    # defensively because unit tests may provide a minimal DummyApp that
-    # doesn't implement `on_event`.
-    # The previous `_register_startup` helper used `@app.on_event("startup")`.
-    # That pattern is deprecated; we've moved startup logic into the
-    # `_lifespan` asynccontextmanager above so there is no need to call a
-    # separate registration function here.
-
+    # The /api/tracked POST endpoint is already registered above in the try/except block
+    
     # Health endpoint for the tracker: show persisted tracked state info
     async def tracker_status() -> dict:  # pragma: no cover
         try:  # pragma: no cover

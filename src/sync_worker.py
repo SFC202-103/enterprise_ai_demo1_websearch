@@ -81,7 +81,7 @@ _global_worker: SyncWorker | None = None
 
 
 def start_worker(interval: int = 60) -> SyncWorker:
-    global _global_worker
+    global _global_worker  # pylint: disable=global-statement
     if _global_worker is None:
         _global_worker = SyncWorker(interval=interval)
         _global_worker.start()
@@ -89,7 +89,7 @@ def start_worker(interval: int = 60) -> SyncWorker:
 
 
 def stop_worker() -> None:
-    global _global_worker
+    global _global_worker  # pylint: disable=global-statement
     if _global_worker is not None:
         _global_worker.stop()
         _global_worker = None

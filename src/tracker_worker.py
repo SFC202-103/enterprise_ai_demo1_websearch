@@ -185,7 +185,7 @@ def _run_job(loop_interval: float = 3.0):
 
 
 def start_scheduler(interval: float = 3.0):
-    global _scheduler, _job
+    global _scheduler, _job  # pylint: disable=global-statement
     if BackgroundScheduler is None:
         return
     if _scheduler is not None:
@@ -196,7 +196,7 @@ def start_scheduler(interval: float = 3.0):
 
 
 def stop_scheduler():
-    global _scheduler
+    global _scheduler  # pylint: disable=global-statement
     if _scheduler is None:
         return
     try:

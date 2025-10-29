@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # type: ignore
 import pytest
 
 import src.fastapi_app as fa
@@ -56,4 +56,6 @@ def test_live_matches_provider_riot_upcoming(monkeypatch, client):
 @pytest.mark.skip(reason="Connector fallback logic not triggering as expected in test environment")
 def test_live_matches_no_provider_fallbacks(monkeypatch, client):
     """Test that riot is used when pandascore fails."""
-    pass
+    # Skipped - test needs implementation
+    assert True
+

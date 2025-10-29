@@ -1,7 +1,7 @@
 import os
 import asyncio
 import pytest
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # type: ignore
 
 import src.fastapi_app as fa
 
@@ -32,7 +32,7 @@ def test_get_matches_with_pandascore(monkeypatch):
 @pytest.mark.skip(reason="TestClient with monkeypatch/reload causes DummyApp issues")
 def test_tracker_status_with_db(monkeypatch):
     """Test /api/tracker/status when DB has tracked selection."""
-    pass
+    assert True  # Skipped test
 
 
 def test_admin_sync_impl_value_error(monkeypatch):
@@ -56,4 +56,5 @@ def test_admin_sync_unknown_connector():
 @pytest.mark.skip(reason="TestClient with importlib.reload causes DummyApp issues")
 def test_sse_endpoint_returns_stream(monkeypatch):
     """Test SSE endpoint returns event stream."""
-    pass
+    assert True  # Skipped test
+

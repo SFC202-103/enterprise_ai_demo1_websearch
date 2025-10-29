@@ -65,18 +65,13 @@ def test_get_live_matches_with_cache_path(monkeypatch):
     assert call_count[0] == 1
     
     # Second call should use cache (but our simple cache implementation may still call)
-    res2 = asyncio.run(fa.get_live_matches(game="valorant"))
+    _ = asyncio.run(fa.get_live_matches(game="valorant"))
     # Just verify it returns data
     assert isinstance(res1, list)
 
 
 def test_get_live_matches_cache_import_failure(monkeypatch):
     """Test get_live_matches when cache import fails."""
-    def bad_import(name, *args, **kwargs):
-        if "cache" in name:
-            raise ImportError("no cache")
-        return __import__(name, *args, **kwargs)
-    
     # This would exercise the except path around cache usage
     # For now just verify the function handles missing cache gracefully
     res = asyncio.run(fa.get_live_matches())
@@ -150,8 +145,8 @@ def test_set_tracked_stores_in_memory_fallback(monkeypatch):
     # Clear tracked
     fa._tracked.clear()
     
-    # Call set_tracked with admin token
-    res = asyncio.run(fa.set_tracked({"match_id": "mem1", "team": "MemT"}, "test_admin"))
+    # Call set_tracked without admin token (it doesn't take admin_token parameter)
+    res = asyncio.run(fa.set_tracked({"match_id": "mem1", "team": "MemT"}))
     assert res.get("ok") is True
 
 
@@ -175,7 +170,7 @@ def test_get_live_matches_riot_fallback_after_pandascore_fails(monkeypatch):
 @pytest.mark.skip(reason="Import monkeypatching causes infinite recursion")
 def test_get_matches_import_error_fallback(monkeypatch):
     """Test get_matches falls back to fixture when imports fail."""
-    pass
+    assert True  # Skipped test
 
 
 def test_tracker_status_exception_path():
@@ -255,13 +250,6 @@ def test_admin_sync_riot_success(monkeypatch):
 def test_get_live_matches_game_filter_on_fixture(monkeypatch):
     """Test get_live_matches applies game filter to fixture."""
     # Force connectors to fail so it uses fixture
-    def bad_import(name, *args, from_list=None, level=0):
-        if "connectors" in name:
-            raise ImportError("no connectors")
-        # Get the real __import__
-        import builtins
-        return builtins.__import__(name, *args, fromlist=from_list, level=level)
-    
     # Don't monkeypatch __import__ - causes recursion. Instead just test with fixture data
     original = fa._fixture_data.get("matches", [])
     fa._fixture_data["matches"] = [

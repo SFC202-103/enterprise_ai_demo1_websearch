@@ -18,7 +18,9 @@ def test_emit_events_no_db_no_redis(monkeypatch):
 
 
 def test_celery_registration_with_fake_celery(monkeypatch):
-    import sys, types, importlib
+    import sys
+    import types
+    # importlib is already imported at module level
 
     # fake celery module
     fake = types.ModuleType("celery")
@@ -43,7 +45,7 @@ def test_celery_registration_with_fake_celery(monkeypatch):
 
     # reload celery_app and tracker_tasks to trigger registration
     ca = importlib.reload(__import__("src.celery_app", fromlist=["*"]))
-    tt = importlib.reload(__import__("src.tracker_tasks", fromlist=["*"]))
+    _ = importlib.reload(__import__("src.tracker_tasks", fromlist=["*"]))
 
     # make_celery should now return a FakeCelery
     celery = ca.make_celery()
@@ -54,7 +56,9 @@ def test_celery_registration_with_fake_celery(monkeypatch):
 
 
 def test_emit_events_with_fake_db_and_redis(monkeypatch):
-    import sys, types, importlib
+    import sys
+    import types
+    # importlib is already imported at module level
 
     # fake redis client
     fake_redis_mod = types.ModuleType("redis")
@@ -130,7 +134,10 @@ def test_emit_events_with_fake_db_and_redis(monkeypatch):
 
 def test_emit_events_for_all_branches(monkeypatch):
     """Force random branches to execute and ensure persistence and store pushes."""
-    import sys, types, importlib, os
+    import sys
+    import types
+    import os
+    # importlib is already imported at module level
 
     # fake db
     fake_db = types.ModuleType("src.db")
@@ -196,15 +203,18 @@ def test_reload_import_time_variants(monkeypatch):
     """Reload src.tracker_tasks under different import failure scenarios to
     exercise the module-level try/except import paths.
     """
-    import builtins, importlib, sys, types
+    import builtins
+    import sys
+    import types
+    # importlib is already imported at module level
 
     # First variant: force ImportError for redis and celery app
     real_import = builtins.__import__
 
-    def failing_import(name, globals=None, locals=None, fromlist=(), level=0):
+    def failing_import(name, glob=None, loc=None, fromlist=(), level=0):
         if name in ("redis", "src.celery_app"):
             raise ImportError("simulated missing")
-        return real_import(name, globals, locals, fromlist, level)
+        return real_import(name, glob, loc, fromlist, level)
 
     builtins.__import__ = failing_import
     try:

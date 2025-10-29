@@ -3,7 +3,7 @@ import asyncio
 import os
 import pytest
 from unittest.mock import patch
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # type: ignore
 
 from src import fastapi_app as fa
 from src import backend_store as bs
@@ -129,43 +129,43 @@ def test_get_matches_pandascore_fails_fallback_to_fixture(monkeypatch):
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_get_tracked_and_set_tracked_db_backed(monkeypatch, client):
     """Test get_tracked and set_tracked using DB backend."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_set_tracked_no_admin_token_fails(client):
     """Test that set_tracked without admin token returns error."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_admin_sync_riot_connector(monkeypatch, client):
     """Test admin_sync with riot connector."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_admin_sync_unknown_connector(monkeypatch, client):
     """Test admin_sync with unknown connector returns error."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_admin_sync_connector_value_error(monkeypatch, client):
     """Test admin_sync when connector raises ValueError."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_tracker_status_with_db(monkeypatch, client):
     """Test /api/tracker/status when DB has tracked selection."""
-    pass
+    assert True  # Skipped test
 
 
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_tracker_status_no_tracked_match(monkeypatch, client):
     """Test /api/tracker/status when no match is tracked."""
-    pass
+    assert True  # Skipped test
 
 
 def test_db_tournaments_query_error():
@@ -194,7 +194,7 @@ def test_set_tracked_fallback_to_memory(monkeypatch):
 @pytest.mark.skip(reason="TestClient with monkeypatch causes DummyApp issues")
 def test_admin_sync_no_connector_param(monkeypatch, client):
     """Test admin_sync when connector param is missing."""
-    pass
+    assert True  # Skipped test
 
 
 def test_push_update_missing_fields():

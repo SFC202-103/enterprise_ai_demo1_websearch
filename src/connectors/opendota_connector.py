@@ -47,7 +47,6 @@ class OpenDotaConnector:
             params["less_than_match_id"] = less_than_match_id
 
         url = f"{self.BASE_URL}/proMatches"
-        last_exc: Optional[Exception] = None
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -64,8 +63,7 @@ class OpenDotaConnector:
                 resp.raise_for_status()
                 data = resp.json()
                 break
-            except Exception as exc:
-                last_exc = exc
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue
@@ -175,7 +173,7 @@ class OpenDotaConnector:
                 
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue

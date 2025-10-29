@@ -49,7 +49,6 @@ class RiotConnector:
         # Placeholder endpoint path — tests will mock the HTTP call
         url = f"{self.BASE_URL}/lol/matches/v1/matches"
 
-        last_exc: Optional[Exception] = None
         for attempt in range(self.max_retries + 1):
             try:
                 client = self._client_instance()
@@ -69,8 +68,7 @@ class RiotConnector:
                 resp.raise_for_status()
                 data = resp.json()
                 break
-            except Exception as exc:
-                last_exc = exc
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue

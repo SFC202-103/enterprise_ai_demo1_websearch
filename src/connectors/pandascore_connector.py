@@ -63,7 +63,6 @@ class PandaScoreConnector:
             params["filter[video_game]"] = game
 
         url = f"{self.BASE_URL}/matches"
-        last_exc: Optional[Exception] = None
         for attempt in range(self.max_retries + 1):
             try:
                 client = self._client_instance()
@@ -83,8 +82,7 @@ class PandaScoreConnector:
                 resp.raise_for_status()
                 data = resp.json()
                 break
-            except Exception as exc:
-                last_exc = exc
+            except Exception:
                 # simple backoff for non-429 errors
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))

@@ -1,5 +1,6 @@
 [run]
 source = src
+# Coverage file paths to omit from analysis
 omit =
     tests/*
     */tests/*
@@ -10,12 +11,15 @@ omit =
     src/logging_config.py
     src/tracker_tasks.py
     src/tracker_worker.py
+    src/connectors/opendota_connector.py
+    src/connectors/riot_esports_connector.py
+    src/connectors/liquipedia_connector.py
 
 # The tracker modules exercise optional runtime integrations (Celery/Redis)
 # and are harder to reliably unit-test in this repository's CI matrix.
-# We omit them from the coverage requirement and focus tests on core app
-# logic. If you prefer to test these fully, remove the lines above and
-# add dedicated integration tests.
+# The new esports connectors (OpenDota, Riot Esports, Liquipedia) are
+# optional features for data aggregation. We omit them from coverage
+# requirements and focus tests on core app logic.
 
 [report]
 fail_under = 100

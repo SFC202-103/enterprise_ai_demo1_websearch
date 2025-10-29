@@ -75,16 +75,16 @@ def test_save_accepts_match_id_key():
         assert inst.title == "Alt Match"
 
 
-    def test_save_creates_new_instance_when_absent():
-        # Ensure we exercise the branch that constructs a new Match(id=...)
-        from src import db
+def test_save_creates_new_instance_when_absent():
+    # Ensure we exercise the branch that constructs a new Match(id=...)
+    from src import db
 
-        db.init_db()
-        # ensure the test id is absent
-        with db.SessionLocal() as session:
-            session.query(db.Match).filter(db.Match.id == "new_cov").delete()
-            session.commit()
+    db.init_db()
+    # ensure the test id is absent
+    with db.SessionLocal() as session:
+        session.query(db.Match).filter(db.Match.id == "new_cov").delete()
+        session.commit()
 
-        sample = [{"id": "new_cov", "title": "Created"}]
-        saved = db.save_matches(sample)
-        assert saved == 1
+    sample = [{"id": "new_cov", "title": "Created"}]
+    saved = db.save_matches(sample)
+    assert saved == 1

@@ -68,7 +68,7 @@ class RiotEsportsConnector:
                 resp.raise_for_status()
                 data = resp.json()
                 return data.get("data", {}).get("schedule", {}).get("events", [])
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue
@@ -97,7 +97,7 @@ class RiotEsportsConnector:
                 resp.raise_for_status()
                 data = resp.json()
                 return data.get("data", {}).get("schedule", {}).get("events", [])
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue
@@ -223,7 +223,7 @@ class RiotEsportsConnector:
                 
                 resp.raise_for_status()
                 return resp.json().get("data", {})
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (attempt + 1))
                     continue

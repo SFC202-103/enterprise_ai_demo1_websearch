@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # type: ignore
 
 
 def test_push_update_header_auth(monkeypatch):

@@ -63,7 +63,7 @@ def test_get_match_found_and_notfound():
 
     r2 = asyncio.run(fa.get_match("unlikely-id-xyz"))
     # may return a JSONResponse (FastAPI) or a dict fallback
-    from fastapi.responses import JSONResponse
+    from fastapi.responses import JSONResponse  # type: ignore
     if isinstance(r2, JSONResponse):
         assert r2.status_code == 404
     else:

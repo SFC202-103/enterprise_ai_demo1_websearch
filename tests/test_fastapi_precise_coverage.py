@@ -156,4 +156,5 @@ def test_remaining_lines_explanation():
     2. Exception handlers for runtime errors that are hard to trigger in tests
     3. Already marked with pragma: no cover
     """
-    pass
+    assert True  # Documentation test
+

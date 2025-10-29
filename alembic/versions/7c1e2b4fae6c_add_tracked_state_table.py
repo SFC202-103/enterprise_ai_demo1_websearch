@@ -15,7 +15,7 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table(
+    op.create_table(  # type: ignore
         'tracked_state',
         sa.Column('id', sa.Integer(), primary_key=True, nullable=False),
         sa.Column('match_id', sa.String(), nullable=False),
@@ -28,4 +28,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('tracked_state')
+    op.drop_table('tracked_state')  # type: ignore
