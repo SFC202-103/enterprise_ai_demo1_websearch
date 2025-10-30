@@ -1778,6 +1778,31 @@
                 const gameLinks = sentiment.gameLinks || [];
                 const teamLinks = sentiment.teamLinks || [];
                 
+                // Build game links HTML
+                let gameLinksHtml = '';
+                if (gameLinks.length > 0) {
+                    gameLinksHtml = '<strong>Resources:</strong><br>';
+                    gameLinksHtml += gameLinks.map(link => 
+                        `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`
+                    ).join('<br>');
+                }
+                
+                // Build teams HTML
+                let teamsHtml = '';
+                if (teams.length > 0) {
+                    teamsHtml = '<div class="sentiment-card"><div class="sentiment-label">👥 Team Information</div><div class="sentiment-description" style="margin-top: 10px;">';
+                    teams.forEach((team, idx) => {
+                        teamsHtml += `<div style="margin-bottom: 15px;"><strong>${team.name || team.acronym || `Team ${idx + 1}`}</strong><br>`;
+                        if (teamLinks[idx] && teamLinks[idx].length > 0) {
+                            teamsHtml += teamLinks[idx].map(link => 
+                                `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`
+                            ).join('<br>');
+                        }
+                        teamsHtml += '</div>';
+                    });
+                    teamsHtml += '</div></div>';
+                }
+                
                 sentimentContent.innerHTML = `
                     <div class="sentiment-card">
                         <div class="sentiment-label">Overall Sentiment</div>
@@ -1822,28 +1847,11 @@
                         <div class="sentiment-label">🎮 Game Information</div>
                         <div class="sentiment-description" style="margin-top: 10px;">
                             <strong>Game:</strong> ${game}<br>
-                            ${gameLinks.length > 0 ? `
-                                <strong>Resources:</strong><br>
-                                ${gameLinks.map(link => `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`).join('<br>')}
-                            ` : ''}
+                            ${gameLinksHtml}
                         </div>
                     </div>
                     
-                    ${teams.length > 0 ? `
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">👥 Team Information</div>
-                        <div class="sentiment-description" style="margin-top: 10px;">
-                            ${teams.map((team, idx) => `
-                                <div style="margin-bottom: 15px;">
-                                    <strong>${team.name || team.acronym || `Team ${idx + 1}`}</strong><br>
-                                    ${teamLinks[idx] && teamLinks[idx].length > 0 ? `
-                                        ${teamLinks[idx].map(link => `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`).join('<br>')}
-                                    ` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    ` : ''}
+                    ${teamsHtml}
                 `;
             } catch (error) {
                 console.error('Error generating sentiment:', error);
