@@ -146,6 +146,16 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
                 # Use generic MediaWiki.org endpoint
                 conn = LiquipediaConnector(game="mediawiki", use_generic_mediawiki=True)
                 return conn.get_matches(game=game)
+            if p == "hltv":
+                from src.connectors.hltv_connector import HLTVConnector
+
+                conn = HLTVConnector()
+                return conn.get_matches(game=game)
+            if p == "battlefy":
+                from src.connectors.battlefy_connector import BattlefyConnector
+
+                conn = BattlefyConnector()
+                return conn.get_matches(game=game)
         except ValueError as ve:
             # missing token/config
             return {"ok": False, "error": str(ve)}

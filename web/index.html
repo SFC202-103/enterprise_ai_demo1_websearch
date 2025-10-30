@@ -713,6 +713,8 @@
                         <option value="pandascore">PandaScore (Multi-game)</option>
                         <option value="opendota">OpenDota (Dota 2)</option>
                         <option value="riot_esports">Riot Esports (LoL)</option>
+                        <option value="hltv">HLTV.org (CS:GO)</option>
+                        <option value="battlefy">Battlefy (Tournaments)</option>
                         <option value="liquipedia">Liquipedia (Esports)</option>
                         <option value="mediawiki">MediaWiki.org (Generic)</option>
                     </select>
@@ -756,9 +758,16 @@
             </div>
         </div>
 
-        <!-- Team Statistics Section -->
-        <div class="search-section" style="margin-top: 20px;">
-            <h2 style="margin-bottom: 20px; color: #667eea;">📊 Team Statistics</h2>
+        <!-- Team Statistics Section - Hidden by default, shown on match click -->
+        <div id="teamStatsSection" class="search-section" style="margin-top: 20px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #667eea;">📊 Team Statistics</h2>
+                <button onclick="hideMatchDetails()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
+            </div>
+            <div id="selectedMatchInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 id="selectedMatchTitle" style="margin: 0 0 10px 0;">Match Details</h3>
+                <p id="selectedMatchTeams" style="margin: 0; font-size: 1.1em;"></p>
+            </div>
             <div id="teamStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                 <div class="stat-card">
                     <div class="stat-label">Loading team stats...</div>
@@ -776,9 +785,9 @@
             </div>
         </div>
 
-        <!-- Sentiment Analysis Section -->
-        <div class="search-section" style="margin-top: 20px;">
-            <h2 style="margin-bottom: 20px; color: #667eea;">💬 Community Sentiment</h2>
+        <!-- Sentiment Analysis Section - Hidden by default, shown on match click -->
+        <div id="sentimentSection" class="search-section" style="margin-top: 20px; display: none;">
+            <h2 style="margin-bottom: 20px; color: #667eea;">💬 Match Sentiment Analysis</h2>
             <div id="sentimentContainer" style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 30px; border-radius: 15px;">
                 <div class="stat-label">Loading sentiment analysis...</div>
             </div>
@@ -834,23 +843,17 @@
             setInterval(() => {
                 console.log('Auto-refreshing matches...');
                 loadMatches();
-                loadTeamStats();
                 loadPlayerStats();
-                loadSentiment();
             }, 120000); // 2 minutes
             
             // Also refresh when data source changes
             document.getElementById('dataSource').addEventListener('change', () => {
                 loadMatches();
-                loadTeamStats();
                 loadPlayerStats();
-                loadSentiment();
             });
             
-            // Load additional stats on page load
-            loadTeamStats();
+            // Load player stats on page load (team stats shown only on match click)
             loadPlayerStats();
-            loadSentiment();
         });
 
         function setupEventListeners() {
@@ -1270,6 +1273,153 @@
             
             // Show modal
             modal.style.display = 'block';
+            
+            // Also show team stats and sentiment sections for this match
+            showMatchTeamStats(match);
+            showMatchSentiment(match);
+        }
+
+        function showMatchTeamStats(match) {
+            const section = document.getElementById('teamStatsSection');
+            const titleEl = document.getElementById('selectedMatchTitle');
+            const teamsEl = document.getElementById('selectedMatchTeams');
+            const container = document.getElementById('teamStatsContainer');
+            
+            // Show the section
+            section.style.display = 'block';
+            
+            // Scroll to the section
+            setTimeout(() => {
+                section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 300);
+            
+            // Update match info
+            titleEl.textContent = match.name || match.title || 'Match Details';
+            const teams = match.teams || match.opponents || [];
+            if (teams.length >= 2) {
+                teamsEl.textContent = `${teams[0].name || teams[0].acronym} vs ${teams[1].name || teams[1].acronym}`;
+            } else {
+                teamsEl.textContent = 'Team statistics';
+            }
+            
+            // Load stats for the teams in this match
+            if (teams.length >= 2) {
+                const teamNames = teams.map(t => t.name || t.acronym);
+                loadTeamStatsForMatch(teamNames);
+            } else {
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">No team information available for this match</div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadTeamStatsForMatch(teamNames) {
+            const container = document.getElementById('teamStatsContainer');
+            
+            try {
+                const teamStatsPromises = teamNames.map(team => 
+                    fetch(`/api/team_stats?team_name=${encodeURIComponent(team)}`).then(r => r.json())
+                );
+                
+                const teamStats = await Promise.all(teamStatsPromises);
+                
+                container.innerHTML = teamStats.map(stats => `
+                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">${stats.team_name}</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
+                            <div><strong>Matches:</strong> ${stats.total_matches}</div>
+                            <div><strong>Record:</strong> ${stats.wins}W-${stats.losses}L-${stats.draws}D</div>
+                            <div><strong>Form:</strong> ${stats.recent_form || 'N/A'}</div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                            <div style="font-size: 0.85em;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
+                            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;">Confidence: ${stats.confidence}%</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading team stats:', error);
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label" style="color: #ef4444;">Error loading team statistics</div>
+                    </div>
+                `;
+            }
+        }
+
+        function showMatchSentiment(match) {
+            const section = document.getElementById('sentimentSection');
+            const container = document.getElementById('sentimentContainer');
+            
+            // Show the section
+            section.style.display = 'block';
+            
+            // Load sentiment for this specific match
+            loadMatchSentiment(match);
+        }
+
+        async function loadMatchSentiment(match) {
+            const container = document.getElementById('sentimentContainer');
+            
+            try {
+                const matchId = match.id;
+                const response = await fetch(`/api/sentiment?match_id=${encodeURIComponent(matchId)}`);
+                const sentiment = await response.json();
+                
+                const sentimentEmoji = sentiment.overall_sentiment === 'Very Positive' ? '🤩' :
+                                      sentiment.overall_sentiment === 'Positive' ? '😊' : 
+                                      sentiment.overall_sentiment === 'Negative' ? '😟' : '😐';
+                
+                const excitementColor = sentiment.excitement_level >= 80 ? '#10b981' : 
+                                       sentiment.excitement_level >= 60 ? '#f59e0b' : '#6b7280';
+                
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">${sentimentEmoji}</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Match Sentiment</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${sentiment.overall_sentiment}</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Confidence: ${sentiment.confidence}%</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">🔥</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Excitement</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: ${excitementColor};">${sentiment.excitement_level}%</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">${sentiment.fan_engagement || 'High'}</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">📊</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Trending</div>
+                            <div style="font-size: 0.9em; margin-top: 10px;">
+                                ${(sentiment.trending_topics || []).map(topic => 
+                                    `<span style="display: inline-block; background: #667eea; color: white; padding: 5px 12px; border-radius: 15px; margin: 3px; font-size: 0.85em;">${topic}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading match sentiment:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; color: #ef4444;">
+                        <p>Error loading sentiment analysis for this match</p>
+                    </div>
+                `;
+            }
+        }
+
+        function hideMatchDetails() {
+            document.getElementById('teamStatsSection').style.display = 'none';
+            document.getElementById('sentimentSection').style.display = 'none';
+            // Scroll back to matches
+            document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
         }
 
         function loadHighlights(match, status) {
