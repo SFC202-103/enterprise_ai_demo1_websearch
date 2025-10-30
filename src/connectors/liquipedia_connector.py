@@ -109,7 +109,7 @@ class LiquipediaConnector:
                 resp = client.get(self.base_url, params=params)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(1.0 * (attempt + 1))
                     continue
@@ -144,7 +144,7 @@ class LiquipediaConnector:
                 
                 members = data.get("query", {}).get("categorymembers", [])
                 return [member["title"] for member in members]
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(1.0 * (attempt + 1))
                     continue
@@ -179,7 +179,7 @@ class LiquipediaConnector:
                 
                 results = data.get("query", {}).get("search", [])
                 return [result["title"] for result in results]
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(1.0 * (attempt + 1))
                     continue
@@ -213,7 +213,7 @@ class LiquipediaConnector:
                 data = resp.json()
                 
                 return data.get("query", {}).get("recentchanges", [])
-            except Exception as exc:
+            except Exception:
                 if attempt < self.max_retries:
                     time.sleep(1.0 * (attempt + 1))
                     continue

@@ -769,19 +769,64 @@
             </button>
         </div>
 
-        <!-- Team Statistics Section - Hidden by default, shown on match click -->
+        <!-- Combined Match Details & Team Statistics Section -->
         <div id="teamStatsSection" class="search-section" style="margin-top: 20px; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #667eea;">📊 Team Statistics</h2>
+                <h2 style="margin: 0; color: #667eea;">📊 Match Analysis</h2>
                 <button onclick="hideMatchDetails()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
             </div>
-            <div id="selectedMatchInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 id="selectedMatchTitle" style="margin: 0 0 10px 0;">Match Details</h3>
-                <p id="selectedMatchTeams" style="margin: 0; font-size: 1.1em;"></p>
+            
+            <!-- Match Info Card -->
+            <div id="selectedMatchInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 id="selectedMatchTitle" style="margin: 0 0 15px 0; font-size: 1.5em;">Match Details</h3>
+                <p id="selectedMatchTeams" style="margin: 0 0 15px 0; font-size: 1.2em;"></p>
+                
+                <!-- Match Stats Row -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.8;">Status</div>
+                        <div id="matchStatus" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.8;">Game</div>
+                        <div id="matchGame" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.8;">Provider</div>
+                        <div id="matchProvider" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
+                    </div>
+                </div>
+                
+                <!-- Streaming Links -->
+                <div id="streamingLinks" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 10px;">📺 Where to Watch</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="#" id="twitchLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #9146ff; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            Twitch
+                        </a>
+                        <a href="#" id="youtubeLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #ff0000; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            YouTube
+                        </a>
+                        <a href="#" id="officialLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            Official Stream
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div id="teamStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            
+            <!-- Team Statistics Cards -->
+            <h3 style="color: #667eea; margin-bottom: 15px;">Team Statistics</h3>
+            <div id="teamStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
                 <div class="stat-card">
                     <div class="stat-label">Loading team stats...</div>
+                </div>
+            </div>
+            
+            <!-- Player Links Section -->
+            <div style="background: linear-gradient(135deg, #10b98120 0%, #05966920 100%); padding: 20px; border-radius: 10px;">
+                <h3 style="color: #10b981; margin: 0 0 15px 0;">🎮 Player Information</h3>
+                <div id="playerLinksContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div style="text-align: center; padding: 10px;">Loading player links...</div>
                 </div>
             </div>
         </div>
@@ -1309,6 +1354,7 @@
             const titleEl = document.getElementById('selectedMatchTitle');
             const teamsEl = document.getElementById('selectedMatchTeams');
             const container = document.getElementById('teamStatsContainer');
+            const playerLinksContainer = document.getElementById('playerLinksContainer');
             
             // Show the section
             section.style.display = 'block';
@@ -1327,6 +1373,21 @@
                 teamsEl.textContent = 'Team statistics';
             }
             
+            // Update match metadata
+            const game = (match.video_game || match.game || 'Esports').toLowerCase();
+            const status = getMatchStatus(match);
+            const provider = match.provider || match.source || 'Unknown';
+            
+            document.getElementById('matchStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            document.getElementById('matchGame').textContent = formatGameName(game);
+            document.getElementById('matchProvider').textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
+            
+            // Update streaming links based on game
+            updateStreamingLinks(game, status, teams);
+            
+            // Load player links
+            loadPlayerLinks(game, teams);
+            
             // Load stats for the teams in this match
             if (teams.length >= 2) {
                 const teamNames = teams.map(t => t.name || t.acronym);
@@ -1338,6 +1399,128 @@
                     </div>
                 `;
             }
+        }
+        
+        function updateStreamingLinks(game, status, teams) {
+            const twitchLink = document.getElementById('twitchLink');
+            const youtubeLink = document.getElementById('youtubeLink');
+            const officialLink = document.getElementById('officialLink');
+            
+            // Game-specific streaming channels
+            const streamingChannels = {
+                'league of legends': {
+                    twitch: 'https://twitch.tv/riotgames',
+                    youtube: 'https://youtube.com/c/lolesports',
+                    official: 'https://lolesports.com'
+                },
+                'csgo': {
+                    twitch: 'https://twitch.tv/counter-strike',
+                    youtube: 'https://youtube.com/c/CSGO',
+                    official: 'https://www.hltv.org/matches'
+                },
+                'dota 2': {
+                    twitch: 'https://twitch.tv/dota2',
+                    youtube: 'https://youtube.com/c/dota2',
+                    official: 'https://www.dota2.com/esports'
+                },
+                'valorant': {
+                    twitch: 'https://twitch.tv/valorant',
+                    youtube: 'https://youtube.com/c/ValorantEsports',
+                    official: 'https://valorantesports.com'
+                },
+                'apex legends': {
+                    twitch: 'https://twitch.tv/playapex',
+                    youtube: 'https://youtube.com/c/PlayApex',
+                    official: 'https://www.ea.com/games/apex-legends/compete'
+                },
+                'marvel rivals': {
+                    twitch: 'https://twitch.tv/marvelrivals',
+                    youtube: 'https://youtube.com/@marvelrivals',
+                    official: 'https://www.marvelrivals.com/esports'
+                },
+                'overwatch': {
+                    twitch: 'https://twitch.tv/overwatchleague',
+                    youtube: 'https://youtube.com/c/OverwatchLeague',
+                    official: 'https://overwatchleague.com'
+                }
+            };
+            
+            const channels = streamingChannels[game] || {
+                twitch: 'https://twitch.tv/directory/esports',
+                youtube: 'https://youtube.com/gaming',
+                official: '#'
+            };
+            
+            twitchLink.href = channels.twitch;
+            youtubeLink.href = channels.youtube;
+            officialLink.href = channels.official;
+            
+            // Add status indicator for live matches
+            if (status === 'live') {
+                twitchLink.innerHTML = '🔴 Twitch (LIVE)';
+                youtubeLink.innerHTML = '🔴 YouTube (LIVE)';
+                officialLink.innerHTML = '🔴 Official (LIVE)';
+            } else {
+                twitchLink.innerHTML = 'Twitch';
+                youtubeLink.innerHTML = 'YouTube';
+                officialLink.innerHTML = 'Official Stream';
+            }
+        }
+        
+        function loadPlayerLinks(game, teams) {
+            const playerLinksContainer = document.getElementById('playerLinksContainer');
+            
+            if (!teams || teams.length === 0) {
+                playerLinksContainer.innerHTML = '<div style="text-align: center; padding: 10px;">No player information available</div>';
+                return;
+            }
+            
+            // Player stat URLs by game
+            const playerStatUrls = {
+                'league of legends': (playerName) => `https://u.gg/lol/profile/${encodeURIComponent(playerName)}/overview`,
+                'csgo': (playerName) => `https://www.hltv.org/search?term=${encodeURIComponent(playerName)}`,
+                'dota 2': (playerName) => `https://www.opendota.com/search?q=${encodeURIComponent(playerName)}`,
+                'valorant': (playerName) => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(playerName)}/overview`,
+                'apex legends': (playerName) => `https://apex.tracker.gg/apex/profile/pc/${encodeURIComponent(playerName)}/overview`,
+                'marvel rivals': (playerName) => `https://tracker.gg/marvel-rivals/profile/${encodeURIComponent(playerName)}/overview`,
+                'overwatch': (playerName) => `https://overwatch.blizzard.com/en-us/search/?q=${encodeURIComponent(playerName)}`
+            };
+            
+            const getPlayerUrl = playerStatUrls[game] || ((name) => `#`);
+            
+            let html = '';
+            teams.forEach(team => {
+                const teamName = team.name || team.acronym || 'Unknown Team';
+                const players = team.players || [];
+                
+                if (players.length > 0) {
+                    html += `<div style="grid-column: 1 / -1; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 10px;">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">${teamName}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+                    
+                    players.forEach(player => {
+                        const playerName = player.name || player.summoner_name || player.ign || 'Player';
+                        const url = getPlayerUrl(playerName);
+                        html += `<a href="${url}" target="_blank" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; transition: background 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">
+                            ${playerName}
+                        </a>`;
+                    });
+                    
+                    html += `</div></div>`;
+                } else {
+                    // Generate sample players if none provided
+                    html += `<div style="grid-column: 1 / -1; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 10px;">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">${teamName}</div>
+                        <div style="font-size: 0.9em; opacity: 0.7;">Player roster not available</div>
+                    </div>`;
+                }
+            });
+            
+            if (html === '') {
+                html = '<div style="text-align: center; padding: 10px; opacity: 0.7;">Player information will be displayed here when available</div>';
+            }
+            
+            playerLinksContainer.innerHTML = html;
         }
 
         async function loadTeamStatsForMatch(teamNames) {

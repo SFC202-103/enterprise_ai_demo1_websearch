@@ -67,33 +67,53 @@ class ApexLegendsConnector:
         
         normalized: List[Dict[str, Any]] = []
         
-        # Sample Apex Legends professional teams
-        sample_teams = [
-            ("TSM", "DarkZero"),
-            ("OpTic Gaming", "NRG Esports"),
-            ("Team Liquid", "FURIA Esports"),
-            ("100 Thieves", "Sentinels"),
-            ("Cloud9", "G2 Esports")
+        # Comprehensive Apex Legends professional teams across all regions
+        all_teams = [
+            # North America
+            "TSM", "OpTic Gaming", "NRG Esports", "Team Liquid", "FURIA Esports",
+            "100 Thieves", "Sentinels", "Cloud9", "G2 Esports", "DarkZero Esports",
+            "Spacestation Gaming", "Complexity Gaming", "Luminosity Gaming", 
+            "Ghost Gaming", "XSET",
+            # EMEA
+            "Alliance", "MOIST Esports", "NewBee", "Acend", "Team Liquid EU",
+            "FNATIC", "Natus Vincere", "Virtus.pro", "BIG", "GUILD Esports",
+            "Team Falcons", "Rebels",
+            # APAC North
+            "Crazy Raccoon", "REJECT", "FENNEL", "Sengoku Gaming", "SCARZ", 
+            "NORTHEPTION",
+            # APAC South
+            "FULL SENSE", "OG Esports", "Xavier Esports", "Bacon Time", "Team SMG",
+            # South America
+            "Team Legacy", "FURIA Academy", "KNG Esports", "Vivo Keyd", 
+            "Odyssey", "Pain Gaming"
         ]
+        
+        # Generate matchups from comprehensive team list
+        sample_teams = []
+        for i in range(0, min(len(all_teams)-1, limit*2), 2):
+            sample_teams.append((all_teams[i], all_teams[i+1]))
         
         tournaments = [
             "ALGS Championship",
             "ALGS Pro League",
-            "Apex Legends Global Series",
-            "Split 1 Playoffs",
-            "Regional Finals"
+            "ALGS Split 1 Playoffs",
+            "ALGS Split 2 Playoffs",
+            "ALGS Challenger Circuit",
+            "ALGS Regional Finals",
+            "ALGS LCQ"
         ]
         
-        for i, (team1, team2) in enumerate(sample_teams[:min(limit, 5)]):
+        for i, (team1, team2) in enumerate(sample_teams[:min(limit, len(sample_teams))]):
             match_id = f"apex_{i+1}"
             tournament = tournaments[i % len(tournaments)]
             
-            # Vary status for demo
-            if i == 0:
+            # Vary status for demo - first few live, next few upcoming, rest finished
+            if i < 2:
                 status = "live"
-                team1_score = 125
-                team2_score = 108
-            elif i == 1:
+                team1_score = random.randint(100, 150)
+                team2_score = random.randint(100, 150)
+                scheduled = datetime.now()
+            elif i < 5:
                 status = "upcoming"
                 team1_score = 0
                 team2_score = 0
@@ -102,12 +122,7 @@ class ApexLegendsConnector:
                 status = "finished"
                 team1_score = random.randint(80, 150)
                 team2_score = random.randint(80, 150)
-                scheduled = datetime.now() - timedelta(hours=i)
-            
-            if i < 2:
-                scheduled = datetime.now() + timedelta(hours=2+i)
-            else:
-                scheduled = datetime.now() - timedelta(hours=i)
+                scheduled = datetime.now() - timedelta(hours=i-4)
             
             normalized.append({
                 "id": match_id,

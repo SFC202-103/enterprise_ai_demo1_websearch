@@ -19,7 +19,7 @@ try:
     
     print(f"✓ Successfully fetched {len(matches)} Dota 2 matches")
     if matches:
-        print(f"\nFirst match:")
+        print("\nFirst match:")
         print(f"  - Title: {matches[0]['title']}")
         print(f"  - Game: {matches[0]['video_game']}")
         print(f"  - Status: {matches[0]['status']}")
@@ -40,7 +40,7 @@ try:
     
     print(f"✓ Successfully fetched {len(matches)} League of Legends matches")
     if matches:
-        print(f"\nFirst match:")
+        print("\nFirst match:")
         print(f"  - Title: {matches[0]['title']}")
         print(f"  - Game: {matches[0]['video_game']}")
         print(f"  - Status: {matches[0]['status']}")
@@ -63,7 +63,7 @@ try:
     
     print(f"✓ Successfully fetched {len(matches)} CS:GO tournament pages")
     if matches:
-        print(f"\nFirst tournament:")
+        print("\nFirst tournament:")
         print(f"  - Title: {matches[0]['title']}")
         print(f"  - Game: {matches[0]['video_game']}")
         print(f"  - URL: {matches[0]['page_url']}")
