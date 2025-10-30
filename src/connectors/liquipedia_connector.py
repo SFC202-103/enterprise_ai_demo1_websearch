@@ -29,6 +29,7 @@ class LiquipediaConnector:
         "csgo": "https://liquipedia.net/counterstrike/api.php",
         "valorant": "https://liquipedia.net/valorant/api.php",
         "overwatch": "https://liquipedia.net/overwatch/api.php",
+        "mediawiki": "https://www.mediawiki.org/w/api.php",  # Generic MediaWiki endpoint
     }
 
     def __init__(
@@ -36,29 +37,36 @@ class LiquipediaConnector:
         game: str = "csgo",
         user_agent: str = "EsportsDemo/1.0 (contact@example.com)",
         timeout: float = 10.0,
-        max_retries: int = 2
+        max_retries: int = 2,
+        use_generic_mediawiki: bool = False
     ):
         """Initialize the Liquipedia connector.
 
         Args:
-            game: Game to fetch data for (dota2, lol, csgo, valorant, overwatch)
+            game: Game to fetch data for (dota2, lol, csgo, valorant, overwatch, mediawiki)
             user_agent: User agent string with contact info (REQUIRED by Liquipedia)
             timeout: HTTP request timeout in seconds
             max_retries: Maximum number of retry attempts
+            use_generic_mediawiki: If True, use generic MediaWiki.org endpoint instead of Liquipedia
         """
         self.game = game.lower()
         self.timeout = timeout
         self.max_retries = max_retries
         self._client: Optional[httpx.Client] = None
         self._last_request_time = 0.0
+        self.use_generic_mediawiki = use_generic_mediawiki
         
         # Liquipedia requires proper User-Agent
         self.user_agent = user_agent
         
-        if self.game not in self.WIKI_URLS:
-            raise ValueError(f"Unsupported game: {game}. Supported: {list(self.WIKI_URLS.keys())}")
-        
-        self.base_url = self.WIKI_URLS[self.game]
+        # If generic MediaWiki is requested, use that endpoint regardless of game
+        if use_generic_mediawiki:
+            self.base_url = self.WIKI_URLS["mediawiki"]
+            self.game = "mediawiki"
+        else:
+            if self.game not in self.WIKI_URLS or self.game == "mediawiki":
+                raise ValueError(f"Unsupported game: {game}. Supported: {[k for k in self.WIKI_URLS.keys() if k != 'mediawiki']}")
+            self.base_url = self.WIKI_URLS[self.game]
 
     def _client_instance(self) -> httpx.Client:
         """Get or create HTTP client instance."""

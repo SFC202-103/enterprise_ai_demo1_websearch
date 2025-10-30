@@ -140,6 +140,12 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
                 liqui_game = game_map.get(game.lower() if game else "", "csgo")
                 conn = LiquipediaConnector(game=liqui_game)
                 return conn.get_matches(game=game)
+            if p == "mediawiki":
+                from src.connectors.liquipedia_connector import LiquipediaConnector
+
+                # Use generic MediaWiki.org endpoint
+                conn = LiquipediaConnector(game="mediawiki", use_generic_mediawiki=True)
+                return conn.get_matches(game=game)
         except ValueError as ve:
             # missing token/config
             return {"ok": False, "error": str(ve)}
@@ -265,6 +271,75 @@ async def get_match(match_id: str) -> Any:
     if FASTAPI_AVAILABLE:  # pragma: no cover - Not found path tested via endpoints
         return JSONResponse(status_code=404, content={"detail": "not found"})
     return {"detail": "not found"}
+
+
+async def get_match_stats(game: Optional[str] = None, provider: Optional[str] = None) -> Dict[str, Any]:
+    """Get statistics about matches (live, upcoming, finished counts).
+
+    Query params:
+    - game: optional video game slug
+    - provider: optional provider name
+
+    Returns:
+        Dictionary with total, live, upcoming, and finished counts
+    """
+    # Fetch all matches using the same logic as get_live_matches
+    matches = await get_live_matches(game=game, provider=provider)
+    
+    # Handle error responses
+    if isinstance(matches, dict) and not matches.get("ok", True):
+        return {
+            "total": 0,
+            "live": 0,
+            "upcoming": 0,
+            "finished": 0,
+            "error": matches.get("error")
+        }
+    
+    # Ensure matches is a list
+    if not isinstance(matches, list):
+        matches = []
+    
+    # Helper functions to determine status
+    def is_live(m: dict) -> bool:
+        st = (m.get("status") or "")
+        if isinstance(st, str) and st:
+            stl = st.lower()
+            return any(k in stl for k in ("running", "live", "in_progress"))
+        if m.get("live") is True:
+            return True
+        return False
+
+    def is_upcoming(m: dict) -> bool:
+        st = (m.get("status") or "")
+        if isinstance(st, str) and st:
+            stl = st.lower()
+            if any(k in stl for k in ("not_started", "scheduled", "upcoming")):
+                return True
+        # If a scheduled_time exists and is non-empty, treat as upcoming
+        if m.get("scheduled_time"):
+            return True
+        return False
+
+    def is_finished(m: dict) -> bool:
+        st = (m.get("status") or "")
+        if isinstance(st, str) and st:
+            stl = st.lower()
+            return any(k in stl for k in ("finished", "completed", "ended", "final"))
+        return False
+    
+    # Count matches by status
+    live_count = sum(1 for m in matches if is_live(m))
+    upcoming_count = sum(1 for m in matches if is_upcoming(m))
+    finished_count = sum(1 for m in matches if is_finished(m))
+    
+    return {
+        "total": len(matches),
+        "live": live_count,
+        "upcoming": upcoming_count,
+        "finished": finished_count
+    }
+
 
 
 async def websocket_match_updates(websocket: "WebSocket", match_id: str):
@@ -657,6 +732,7 @@ if FASTAPI_AVAILABLE:
     app.get("/api/matches")(get_matches)
     app.get("/api/live_matches")(get_live_matches)
     app.get("/api/matches/{match_id}")(get_match)
+    app.get("/api/match_stats")(get_match_stats)
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
     # functions can be called directly in tests without FastAPI.

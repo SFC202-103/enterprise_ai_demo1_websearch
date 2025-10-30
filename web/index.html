@@ -713,7 +713,8 @@
                         <option value="pandascore">PandaScore (Multi-game)</option>
                         <option value="opendota">OpenDota (Dota 2)</option>
                         <option value="riot_esports">Riot Esports (LoL)</option>
-                        <option value="liquipedia">Liquipedia (Historical)</option>
+                        <option value="liquipedia">Liquipedia (Esports)</option>
+                        <option value="mediawiki">MediaWiki.org (Generic)</option>
                     </select>
                     <button class="refresh-btn" onclick="loadMatches()">↻ Refresh</button>
                 </div>
@@ -748,6 +749,10 @@
             <div class="stat-card">
                 <div class="stat-value" id="upcomingMatches">-</div>
                 <div class="stat-label">Upcoming</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="finishedMatches">-</div>
+                <div class="stat-label">Past Games</div>
             </div>
         </div>
 
@@ -797,7 +802,16 @@
             loadMatches();
             setupEventListeners();
             
-            // Removed auto-refresh - only manual refresh now
+            // Auto-refresh every 30 seconds to keep data current
+            setInterval(() => {
+                console.log('Auto-refreshing matches...');
+                loadMatches();
+            }, 30000); // 30 seconds
+            
+            // Also refresh when data source changes
+            document.getElementById('dataSource').addEventListener('change', () => {
+                loadMatches();
+            });
         });
 
         function setupEventListeners() {
@@ -942,17 +956,42 @@
         }
 
         function getMatchStatus(match) {
-            const status = (match.status || '').toLowerCase();
+            const status = String(match.status || '').toLowerCase();
             
-            if (match.live || status === 'running' || status === 'in_progress') {
+            // Check for live status
+            if (match.live === true || 
+                status === 'running' || 
+                status === 'live' || 
+                status === 'in_progress' ||
+                status.includes('running') ||
+                status.includes('live')) {
                 return 'live';
             }
-            if (status === 'finished' || status === 'complete' || status === 'ended') {
+            
+            // Check for finished status
+            if (status === 'finished' || 
+                status === 'complete' || 
+                status === 'completed' ||
+                status === 'ended' || 
+                status === 'final' ||
+                status.includes('finished') ||
+                status.includes('ended')) {
                 return 'finished';
             }
-            if (status === 'not_started' || status === 'scheduled' || match.scheduled_time) {
+            
+            // Check for upcoming/scheduled status
+            if (status === 'not_started' || 
+                status === 'scheduled' || 
+                status === 'upcoming' ||
+                status.includes('scheduled') ||
+                status.includes('upcoming') ||
+                match.scheduled_time || 
+                match.scheduled_at ||
+                match.begin_at) {
                 return 'upcoming';
             }
+            
+            // Default to upcoming if we can't determine
             return 'upcoming';
         }
 
@@ -1570,14 +1609,34 @@
             }
         }
 
-        function updateStats() {
-            const total = allMatches.length;
-            const live = allMatches.filter(m => getMatchStatus(m) === 'live').length;
-            const upcoming = allMatches.filter(m => getMatchStatus(m) === 'upcoming').length;
+        async function updateStats() {
+            try {
+                // Get selected data source
+                const dataSource = document.getElementById('dataSource').value;
+                const url = dataSource ? `/api/match_stats?provider=${dataSource}` : '/api/match_stats';
+                
+                const response = await fetch(url);
+                const stats = await response.json();
+                
+                // Update the display with API data
+                document.getElementById('totalMatches').textContent = stats.total || 0;
+                document.getElementById('liveMatches').textContent = stats.live || 0;
+                document.getElementById('upcomingMatches').textContent = stats.upcoming || 0;
+                document.getElementById('finishedMatches').textContent = stats.finished || 0;
+                
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                // Fallback to local calculation if API fails
+                const total = allMatches.length;
+                const live = allMatches.filter(m => getMatchStatus(m) === 'live').length;
+                const upcoming = allMatches.filter(m => getMatchStatus(m) === 'upcoming').length;
+                const finished = allMatches.filter(m => getMatchStatus(m) === 'finished').length;
 
-            document.getElementById('totalMatches').textContent = total;
-            document.getElementById('liveMatches').textContent = live;
-            document.getElementById('upcomingMatches').textContent = upcoming;
+                document.getElementById('totalMatches').textContent = total;
+                document.getElementById('liveMatches').textContent = live;
+                document.getElementById('upcomingMatches').textContent = upcoming;
+                document.getElementById('finishedMatches').textContent = finished;
+            }
         }
     </script>
 </body>
