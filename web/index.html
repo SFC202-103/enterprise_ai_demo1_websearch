@@ -413,74 +413,7 @@
             }
         }
 
-        /* Modal styles for match details */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 20px 20px 0 0;
-            position: relative;
-        }
-
-        .close {
-            color: white;
-            float: right;
-            font-size: 32px;
-            font-weight: bold;
-            line-height: 1;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .close:hover {
-            transform: scale(1.2);
-        }
-
-        .modal-body {
-            padding: 30px;
-        }
-
+        /* Sentiment and details section styles */
         .sentiment-section {
             margin-top: 25px;
         }
@@ -860,29 +793,35 @@
         <div id="matchesContainer" class="matches-grid"></div>
     </div>
 
-    <!-- Modal for match details and sentiment -->
-    <div id="matchModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <h2 id="modalTitle" style="margin: 0;">Match Details</h2>
+    <!-- Inline Match Details Section (shown when a match is clicked) -->
+    <div id="inlineMatchDetails" style="display: none; margin-top: 40px;">
+        <div class="search-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="inlineModalTitle" style="margin: 0; color: #667eea;">📋 Selected Match Details</h2>
+                <button onclick="closeInlineDetails()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
             </div>
-            <div class="modal-body">
-                <div class="match-details" id="modalDetails"></div>
-                <div class="highlights-section" id="highlightsSection" style="display: none;">
-                    <div class="sentiment-title">
-                        <span>🎬</span>
-                        <span>Highlights & Clips</span>
-                    </div>
-                    <div id="highlightsContent"></div>
+            
+            <!-- Match Details Card -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                <div class="match-details" id="inlineModalDetails"></div>
+            </div>
+            
+            <!-- Highlights Section -->
+            <div class="highlights-section" id="inlineHighlightsSection" style="display: none; margin-bottom: 30px;">
+                <div class="sentiment-title" style="color: #667eea; font-size: 1.3em; font-weight: 600; margin-bottom: 15px;">
+                    <span>🎬</span>
+                    <span>Highlights & Clips</span>
                 </div>
-                <div class="sentiment-section">
-                    <div class="sentiment-title">
-                        <span>💬</span>
-                        <span>General Sentiment Analysis</span>
-                    </div>
-                    <div id="sentimentContent"></div>
+                <div id="inlineHighlightsContent"></div>
+            </div>
+            
+            <!-- Sentiment Section -->
+            <div class="sentiment-section" style="margin-bottom: 30px;">
+                <div class="sentiment-title" style="color: #667eea; font-size: 1.3em; font-weight: 600; margin-bottom: 15px;">
+                    <span>💬</span>
+                    <span>General Sentiment Analysis</span>
                 </div>
+                <div id="inlineSentimentContent"></div>
             </div>
         </div>
     </div>
@@ -1248,15 +1187,15 @@
         }
 
         function showMatchDetails(match) {
-            const modal = document.getElementById('matchModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalDetails = document.getElementById('modalDetails');
-            const sentimentContent = document.getElementById('sentimentContent');
-            const highlightsSection = document.getElementById('highlightsSection');
-            const highlightsContent = document.getElementById('highlightsContent');
+            const inlineDetails = document.getElementById('inlineMatchDetails');
+            const modalTitle = document.getElementById('inlineModalTitle');
+            const modalDetails = document.getElementById('inlineModalDetails');
+            const sentimentContent = document.getElementById('inlineSentimentContent');
+            const highlightsSection = document.getElementById('inlineHighlightsSection');
+            const highlightsContent = document.getElementById('inlineHighlightsContent');
             
             // Set title
-            modalTitle.textContent = match.name || match.title || 'Match Details';
+            modalTitle.textContent = `📋 ${match.name || match.title || 'Match Details'}`;
             
             // Build details
             const game = formatGameName(match.video_game || match.game || 'Esports');
@@ -1281,8 +1220,8 @@
                 const team2Won = team2Score > team1Score;
                 
                 detailsHTML += `
-                    <div class="match-result">
-                        <div class="result-title">Final Result</div>
+                    <div class="match-result" style="background: rgba(255,255,255,0.15); border-left: 4px solid #10b981; color: white;">
+                        <div class="result-title" style="color: white; font-size: 1.2em; font-weight: bold; margin-bottom: 15px;">Final Result</div>
                         <div class="result-teams">
                             <div class="result-team ${team1Won ? 'winner' : team2Won ? 'loser' : ''}">
                                 <div class="result-team-name">${teams[0].name || teams[0].acronym || 'Team 1'}</div>
@@ -1301,29 +1240,29 @@
             }
             
             detailsHTML += `
-                <div class="detail-row">
-                    <span class="detail-label">Game:</span>
-                    <span class="detail-value">${game}</span>
+                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Game:</span>
+                    <span class="detail-value" style="color: white; font-weight: 600;">${game}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Status:</span>
-                    <span class="detail-value">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Status:</span>
+                    <span class="detail-value" style="color: white; font-weight: 600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Scheduled:</span>
-                    <span class="detail-value">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</span>
+                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Scheduled:</span>
+                    <span class="detail-value" style="color: white; font-weight: 600;">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</span>
                 </div>
             `;
             
             if (teams.length >= 2 && status !== 'finished') {
                 detailsHTML += `
-                    <div class="detail-row">
-                        <span class="detail-label">Team 1:</span>
-                        <span class="detail-value">${teams[0].name || teams[0].acronym || 'Team 1'} ${teams[0].score ? `(${teams[0].score})` : ''}</span>
+                    <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <span class="detail-label" style="color: rgba(255,255,255,0.8);">Team 1:</span>
+                        <span class="detail-value" style="color: white; font-weight: 600;">${teams[0].name || teams[0].acronym || 'Team 1'} ${teams[0].score ? `(${teams[0].score})` : ''}</span>
                     </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Team 2:</span>
-                        <span class="detail-value">${teams[1].name || teams[1].acronym || 'Team 2'} ${teams[1].score ? `(${teams[1].score})` : ''}</span>
+                    <div class="detail-row" style="color: white; border-bottom: none;">
+                        <span class="detail-label" style="color: rgba(255,255,255,0.8);">Team 2:</span>
+                        <span class="detail-value" style="color: white; font-weight: 600;">${teams[1].name || teams[1].acronym || 'Team 2'} ${teams[1].score ? `(${teams[1].score})` : ''}</span>
                     </div>
                 `;
             }
@@ -1333,20 +1272,45 @@
             // Show highlights section for finished and live matches
             if (status === 'finished' || status === 'live') {
                 highlightsSection.style.display = 'block';
-                loadHighlights(match, status);
+                loadHighlights(match, status, highlightsContent);
             } else {
                 highlightsSection.style.display = 'none';
             }
             
             // Load sentiment analysis
-            loadSentiment(match);
+            loadSentiment(match, sentimentContent);
             
-            // Show modal
-            modal.style.display = 'block';
+            // Show inline details
+            inlineDetails.style.display = 'block';
+            
+            // Scroll to the details section
+            setTimeout(() => {
+                inlineDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
             
             // Also show team stats and sentiment sections for this match
             showMatchTeamStats(match);
             showMatchSentiment(match);
+        }
+        
+        function closeInlineDetails() {
+            const inlineDetails = document.getElementById('inlineMatchDetails');
+            inlineDetails.style.display = 'none';
+            
+            // Also hide team stats section
+            const teamStatsSection = document.getElementById('teamStatsSection');
+            if (teamStatsSection) {
+                teamStatsSection.style.display = 'none';
+            }
+            
+            // Hide sentiment section
+            const sentimentSection = document.getElementById('sentimentSection');
+            if (sentimentSection) {
+                sentimentSection.style.display = 'none';
+            }
+            
+            // Scroll back to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function showMatchTeamStats(match) {
@@ -1642,8 +1606,7 @@
             document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function loadHighlights(match, status) {
-            const highlightsContent = document.getElementById('highlightsContent');
+        function loadHighlights(match, status, highlightsContent) {
             const teams = match.teams || match.opponents || [];
             const game = (match.video_game || match.game || '').toLowerCase();
             
@@ -1797,8 +1760,7 @@
             return highlights;
         }
 
-        async function loadSentiment(match) {
-            const sentimentContent = document.getElementById('sentimentContent');
+        async function loadSentiment(match, sentimentContent) {
             sentimentContent.innerHTML = `
                 <div class="sentiment-loading">
                     <div class="spinner"></div>
@@ -2004,18 +1966,6 @@
                 importanceText,
                 buzzPoints
             };
-        }
-
-        function closeModal() {
-            document.getElementById('matchModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('matchModal');
-            if (event.target === modal) {
-                closeModal();
-            }
         }
 
         async function updateStats() {
