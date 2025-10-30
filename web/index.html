@@ -710,12 +710,14 @@
                 <div style="display: flex; gap: 10px;">
                     <select id="dataSource" style="padding: 12px 20px; border: 2px solid #667eea; border-radius: 10px; font-size: 14px; font-weight: 600; background: white; color: #667eea; cursor: pointer;">
                         <option value="">All Sources (Aggregated)</option>
-                        <option value="pandascore">PandaScore (Multi-game)</option>
-                        <option value="opendota">OpenDota (Dota 2)</option>
-                        <option value="riot_esports">Riot Esports (LoL)</option>
                         <option value="hltv">HLTV.org (CS:GO)</option>
+                        <option value="riot_esports">Riot Esports (LoL)</option>
+                        <option value="opendota">OpenDota (Dota 2)</option>
+                        <option value="apex">Apex Tracker (Apex Legends)</option>
+                        <option value="marvel">Marvel Esports (Marvel Rivals)</option>
                         <option value="battlefy">Battlefy (Tournaments)</option>
                         <option value="liquipedia">Liquipedia (Esports)</option>
+                        <option value="pandascore">PandaScore (Multi-game)</option>
                         <option value="mediawiki">MediaWiki.org (Generic)</option>
                     </select>
                     <button class="refresh-btn" onclick="loadMatches()">↻ Refresh</button>
@@ -728,6 +730,8 @@
                 <button class="game-btn" data-game="csgo">CS:GO</button>
                 <button class="game-btn" data-game="dota2">Dota 2</button>
                 <button class="game-btn" data-game="valorant">Valorant</button>
+                <button class="game-btn" data-game="apex">Apex Legends</button>
+                <button class="game-btn" data-game="marvel">Marvel Rivals</button>
                 <button class="game-btn" data-game="overwatch">Overwatch</button>
             </div>
 
@@ -758,6 +762,13 @@
             </div>
         </div>
 
+        <!-- Quick Actions -->
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="showPlayerStats()" style="padding: 15px 30px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                🎮 View Top Player Statistics
+            </button>
+        </div>
+
         <!-- Team Statistics Section - Hidden by default, shown on match click -->
         <div id="teamStatsSection" class="search-section" style="margin-top: 20px; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -775,9 +786,12 @@
             </div>
         </div>
 
-        <!-- Player Statistics Section -->
-        <div class="search-section" style="margin-top: 20px;">
-            <h2 style="margin-bottom: 20px; color: #667eea;">🎮 Player Statistics</h2>
+        <!-- Player Statistics Section - Hidden by default, shown on request -->
+        <div id="playerStatsSection" class="search-section" style="margin-top: 20px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #667eea;">🎮 Player Statistics</h2>
+                <button onclick="hidePlayerStats()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
+            </div>
             <div id="playerStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                 <div class="stat-card">
                     <div class="stat-label">Loading player stats...</div>
@@ -839,21 +853,18 @@
             loadMatches();
             setupEventListeners();
             
-            // Auto-refresh every 2 minutes (120 seconds) to keep data current
+            // Auto-refresh every 2 minutes (120 seconds) - only matches
             setInterval(() => {
                 console.log('Auto-refreshing matches...');
                 loadMatches();
-                loadPlayerStats();
             }, 120000); // 2 minutes
             
             // Also refresh when data source changes
             document.getElementById('dataSource').addEventListener('change', () => {
                 loadMatches();
-                loadPlayerStats();
             });
             
-            // Load player stats on page load (team stats shown only on match click)
-            loadPlayerStats();
+            // Stats are loaded on-demand only (when user clicks)
         });
 
         function setupEventListeners() {
@@ -936,6 +947,8 @@
                     'counter-strike', 'csgo', 'cs:go', 'cs',  // Counter-Strike
                     'dota',                     // Dota 2
                     'valorant',                 // Valorant
+                    'apex', 'legends',          // Apex Legends
+                    'marvel', 'rivals',         // Marvel Rivals
                     'overwatch'                 // Overwatch
                 ];
                 const isSupported = supportedGames.some(g => game.includes(g));
@@ -1155,6 +1168,12 @@
                 'dota 2': '⚔️ Dota 2',
                 'dota': '⚔️ Dota 2',
                 'valorant': '💥 Valorant',
+                'apex': '🎯 Apex Legends',
+                'apex-legends': '🎯 Apex Legends',
+                'apexlegends': '🎯 Apex Legends',
+                'marvel': '🦸‍♂️ Marvel Rivals',
+                'marvel-rivals': '🦸‍♂️ Marvel Rivals',
+                'marvelrivals': '🦸‍♂️ Marvel Rivals',
                 'overwatch': '🦸 Overwatch',
                 'ow': '🦸 Overwatch'
             };
@@ -1169,6 +1188,12 @@
             // Handle "Counter-Strike" case specifically
             if (gameString.includes('counter')) {
                 return '🔫 Counter-Strike: GO';
+            }
+            if (gameString.includes('apex')) {
+                return '🎯 Apex Legends';
+            }
+            if (gameString.includes('marvel')) {
+                return '🦸‍♂️ Marvel Rivals';
             }
             
             // Capitalize first letter of each word if no match
@@ -1419,6 +1444,18 @@
             document.getElementById('teamStatsSection').style.display = 'none';
             document.getElementById('sentimentSection').style.display = 'none';
             // Scroll back to matches
+            document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showPlayerStats() {
+            const section = document.getElementById('playerStatsSection');
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+            loadPlayerStats();
+        }
+
+        function hidePlayerStats() {
+            document.getElementById('playerStatsSection').style.display = 'none';
             document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
         }
 

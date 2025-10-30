@@ -156,6 +156,16 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
 
                 conn = BattlefyConnector()
                 return conn.get_matches(game=game)
+            if p == "apex":
+                from src.connectors.apex_connector import ApexLegendsConnector
+
+                conn = ApexLegendsConnector()
+                return conn.get_matches(game=game)
+            if p == "marvel":
+                from src.connectors.marvel_rivals_connector import MarvelRivalsConnector
+
+                conn = MarvelRivalsConnector()
+                return conn.get_matches(game=game)
         except ValueError as ve:
             # missing token/config
             return {"ok": False, "error": str(ve)}
@@ -165,22 +175,23 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
     # No provider requested: try multiple connectors and aggregate results
     all_matches = []
     
-    # Try PandaScore first (most comprehensive)
-    try:
-        from src.connectors.pandascore_connector import PandaScoreConnector
-        from src.connectors.cache import get_cached
-
-        conn = PandaScoreConnector()
+    # Try HLTV for CS:GO (prioritize game-specific sources)
+    if not game or game.lower() in ['csgo', 'cs', 'counter-strike']:
         try:
-            key = f"pandascore:{game or 'all'}:{status or ''}"
-            matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game))
-            all_matches.extend(matches)
+            from src.connectors.hltv_connector import HLTVConnector
+            from src.connectors.cache import get_cached
+
+            conn = HLTVConnector()
+            try:
+                key = f"hltv:{game or 'csgo'}:{status or ''}"
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
+                all_matches.extend(matches)
+            except Exception:
+                pass
         except Exception:
             pass
-    except Exception:
-        pass
-
-    # Try Riot LoL Esports for League of Legends
+    
+    # Try Riot LoL Esports for League of Legends (prioritize official sources)
     if not game or game.lower() in ['lol', 'league', 'leagueoflegends']:
         try:
             from src.connectors.riot_esports_connector import RiotEsportsConnector
@@ -196,7 +207,7 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
         except Exception:
             pass
 
-    # Try OpenDota for Dota 2
+    # Try OpenDota for Dota 2 (prioritize official sources)
     if not game or game.lower() in ['dota2', 'dota']:
         try:
             from src.connectors.opendota_connector import OpenDotaConnector
@@ -205,6 +216,53 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
             conn = OpenDotaConnector()
             try:
                 key = f"opendota:{game or 'dota2'}:{status or ''}"
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
+                all_matches.extend(matches)
+            except Exception:
+                pass
+        except Exception:
+            pass
+    
+    # Try Battlefy for tournament data
+    try:
+        from src.connectors.battlefy_connector import BattlefyConnector
+        from src.connectors.cache import get_cached
+
+        conn = BattlefyConnector()
+        try:
+            key = f"battlefy:{game or 'all'}:{status or ''}"
+            matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
+            all_matches.extend(matches)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    
+    # Try Apex Legends for Apex data
+    if not game or game.lower() in ['apex', 'apex-legends', 'apexlegends']:
+        try:
+            from src.connectors.apex_connector import ApexLegendsConnector
+            from src.connectors.cache import get_cached
+
+            conn = ApexLegendsConnector()
+            try:
+                key = f"apex:{game or 'apex'}:{status or ''}"
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
+                all_matches.extend(matches)
+            except Exception:
+                pass
+        except Exception:
+            pass
+    
+    # Try Marvel Rivals for Marvel Rivals data
+    if not game or game.lower() in ['marvel', 'marvel-rivals', 'marvelrivals']:
+        try:
+            from src.connectors.marvel_rivals_connector import MarvelRivalsConnector
+            from src.connectors.cache import get_cached
+
+            conn = MarvelRivalsConnector()
+            try:
+                key = f"marvel:{game or 'marvel'}:{status or ''}"
                 matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game, limit=25))  # type: ignore[call-arg]
                 all_matches.extend(matches)
             except Exception:
@@ -226,6 +284,22 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
             pass
     except Exception:
         pass
+    
+    # Try PandaScore as fallback (last resort due to rate limits)
+    if len(all_matches) < 5:  # Only if we don't have enough matches yet
+        try:
+            from src.connectors.pandascore_connector import PandaScoreConnector
+            from src.connectors.cache import get_cached
+
+            conn = PandaScoreConnector()
+            try:
+                key = f"pandascore:{game or 'all'}:{status or ''}"
+                matches = get_cached(key, ttl=30.0, loader=lambda: conn.get_matches(game=game))
+                all_matches.extend(matches)
+            except Exception:
+                pass
+        except Exception:
+            pass
 
     # Return aggregated matches if we found any
     if all_matches:
