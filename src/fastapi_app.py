@@ -335,7 +335,7 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
                 return True
             return False
 
-        if s == "live":  # pragma: no cover - Status filtering tested via endpoints
+        if s == "live":
             matches = [m for m in matches if is_live(m)]
         elif s in ("upcoming", "scheduled"):
             matches = [m for m in matches if is_upcoming(m)]

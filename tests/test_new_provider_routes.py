@@ -295,3 +295,79 @@ def test_get_live_matches_aggregation_all_exceptions_handled():
                         
                         # Should still return PandaScore results
                         assert len(result) >= 1
+
+
+def test_get_live_matches_provider_mediawiki():
+    """Test MediaWiki provider selection."""
+    with patch("src.connectors.liquipedia_connector.LiquipediaConnector") as mock_class:
+        mock_instance = Mock()
+        mock_instance.get_matches.return_value = [
+            {"id": "mw1", "title": "Wiki Match", "provider": "MediaWiki"}
+        ]
+        mock_class.return_value = mock_instance
+        
+        result = asyncio.run(fa.get_live_matches(provider="mediawiki"))
+        
+        assert len(result) == 1
+        # Check MediaWiki was initialized with correct params
+        mock_class.assert_called_once_with(game="mediawiki", use_generic_mediawiki=True)
+
+
+def test_get_live_matches_provider_hltv():
+    """Test HLTV provider selection."""
+    with patch("src.connectors.hltv_connector.HLTVConnector") as mock_class:
+        mock_instance = Mock()
+        mock_instance.get_matches.return_value = [
+            {"id": "h1", "title": "CS:GO Match", "provider": "HLTV"}
+        ]
+        mock_class.return_value = mock_instance
+        
+        result = asyncio.run(fa.get_live_matches(provider="hltv"))
+        
+        assert len(result) == 1
+        assert result[0]["provider"] == "HLTV"
+
+
+def test_get_live_matches_provider_battlefy():
+    """Test Battlefy provider selection."""
+    with patch("src.connectors.battlefy_connector.BattlefyConnector") as mock_class:
+        mock_instance = Mock()
+        mock_instance.get_matches.return_value = [
+            {"id": "b1", "title": "Tournament", "provider": "Battlefy"}
+        ]
+        mock_class.return_value = mock_instance
+        
+        result = asyncio.run(fa.get_live_matches(provider="battlefy"))
+        
+        assert len(result) == 1
+        assert result[0]["provider"] == "Battlefy"
+
+
+def test_get_live_matches_provider_apex():
+    """Test Apex Legends provider selection."""
+    with patch("src.connectors.apex_connector.ApexLegendsConnector") as mock_class:
+        mock_instance = Mock()
+        mock_instance.get_matches.return_value = [
+            {"id": "a1", "title": "ALGS", "provider": "Apex Legends"}
+        ]
+        mock_class.return_value = mock_instance
+        
+        result = asyncio.run(fa.get_live_matches(provider="apex"))
+        
+        assert len(result) == 1
+        assert result[0]["provider"] == "Apex Legends"
+
+
+def test_get_live_matches_provider_marvel():
+    """Test Marvel Rivals provider selection."""
+    with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector") as mock_class:
+        mock_instance = Mock()
+        mock_instance.get_matches.return_value = [
+            {"id": "m1", "title": "Marvel Tournament", "provider": "Marvel Rivals"}
+        ]
+        mock_class.return_value = mock_instance
+        
+        result = asyncio.run(fa.get_live_matches(provider="marvel"))
+        
+        assert len(result) == 1
+        assert result[0]["provider"] == "Marvel Rivals"
