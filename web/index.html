@@ -756,6 +756,34 @@
             </div>
         </div>
 
+        <!-- Team Statistics Section -->
+        <div class="search-section" style="margin-top: 20px;">
+            <h2 style="margin-bottom: 20px; color: #667eea;">📊 Team Statistics</h2>
+            <div id="teamStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">Loading team stats...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Statistics Section -->
+        <div class="search-section" style="margin-top: 20px;">
+            <h2 style="margin-bottom: 20px; color: #667eea;">🎮 Player Statistics</h2>
+            <div id="playerStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="stat-card">
+                    <div class="stat-label">Loading player stats...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sentiment Analysis Section -->
+        <div class="search-section" style="margin-top: 20px;">
+            <h2 style="margin-bottom: 20px; color: #667eea;">💬 Community Sentiment</h2>
+            <div id="sentimentContainer" style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 30px; border-radius: 15px;">
+                <div class="stat-label">Loading sentiment analysis...</div>
+            </div>
+        </div>
+
         <div id="loadingIndicator" class="loading" style="display: none;">
             <div class="spinner"></div>
             <p>Loading matches...</p>
@@ -802,16 +830,27 @@
             loadMatches();
             setupEventListeners();
             
-            // Auto-refresh every 30 seconds to keep data current
+            // Auto-refresh every 2 minutes (120 seconds) to keep data current
             setInterval(() => {
                 console.log('Auto-refreshing matches...');
                 loadMatches();
-            }, 30000); // 30 seconds
+                loadTeamStats();
+                loadPlayerStats();
+                loadSentiment();
+            }, 120000); // 2 minutes
             
             // Also refresh when data source changes
             document.getElementById('dataSource').addEventListener('change', () => {
                 loadMatches();
+                loadTeamStats();
+                loadPlayerStats();
+                loadSentiment();
             });
+            
+            // Load additional stats on page load
+            loadTeamStats();
+            loadPlayerStats();
+            loadSentiment();
         });
 
         function setupEventListeners() {
@@ -1638,6 +1677,140 @@
                 document.getElementById('finishedMatches').textContent = finished;
             }
         }
+
+        async function loadTeamStats() {
+            const container = document.getElementById('teamStatsContainer');
+            
+            try {
+                // Get stats for multiple popular teams
+                const teams = ['T1', 'G2', 'Fnatic', 'Cloud9', 'Team Liquid'];
+                const teamStatsPromises = teams.map(team => 
+                    fetch(`/api/team_stats?team_name=${encodeURIComponent(team)}`).then(r => r.json())
+                );
+                
+                const teamStats = await Promise.all(teamStatsPromises);
+                
+                container.innerHTML = teamStats.map(stats => `
+                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">${stats.team_name}</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
+                            <div><strong>Matches:</strong> ${stats.total_matches}</div>
+                            <div><strong>Record:</strong> ${stats.wins}W-${stats.losses}L-${stats.draws}D</div>
+                            <div><strong>Form:</strong> ${stats.recent_form || 'N/A'}</div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                            <div style="font-size: 0.85em;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
+                            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;">Confidence: ${stats.confidence}%</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading team stats:', error);
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label" style="color: #ef4444;">Error loading team statistics</div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadPlayerStats() {
+            const container = document.getElementById('playerStatsContainer');
+            
+            try {
+                // Get stats for sample players
+                const players = ['Faker', 'Caps', 'Rekkles', 'Perkz', 'Bjergsen'];
+                const playerStatsPromises = players.map(player => 
+                    fetch(`/api/player_stats?player_name=${encodeURIComponent(player)}`).then(r => r.json())
+                );
+                
+                const playerStats = await Promise.all(playerStatsPromises);
+                
+                container.innerHTML = playerStats.map(stats => `
+                    <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">🎮 ${stats.player_name}</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                            <div><strong>Games:</strong> ${stats.games_played}</div>
+                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
+                            <div><strong>KDA:</strong> ${stats.kda_ratio}</div>
+                            <div><strong>Avg Score:</strong> ${stats.avg_score_per_game}</div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                            <div style="font-size: 0.85em;"><strong>Performance:</strong> ${stats.recent_performance}</div>
+                            <div style="font-size: 0.85em; margin-top: 5px;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
+                            <div style="font-size: 0.7em; opacity: 0.7; margin-top: 8px; font-style: italic;">${stats.note}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading player stats:', error);
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label" style="color: #ef4444;">Error loading player statistics</div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadSentiment() {
+            const container = document.getElementById('sentimentContainer');
+            
+            try {
+                const response = await fetch('/api/sentiment');
+                const sentiment = await response.json();
+                
+                // Create sentiment visualization
+                const sentimentEmoji = sentiment.overall_sentiment === 'Positive' || sentiment.overall_sentiment === 'Very Positive' ? '😊' : 
+                                      sentiment.overall_sentiment === 'Negative' ? '😟' : '😐';
+                
+                const engagementColor = sentiment.community_engagement === 'Active' ? '#10b981' : 
+                                       sentiment.community_engagement === 'Very Active' ? '#059669' : '#6b7280';
+                
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">${sentimentEmoji}</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Overall Sentiment</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${sentiment.overall_sentiment}</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Confidence: ${sentiment.confidence}%</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">👥</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Community</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: ${engagementColor};">${sentiment.community_engagement}</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Engagement Level</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">🔴</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Live Matches</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: #ef4444;">${sentiment.live_matches}</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Currently Active</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">📈</div>
+                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Market Trend</div>
+                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: #10b981;">${sentiment.market_trend}</div>
+                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Interest: ${sentiment.upcoming_interest}</div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading sentiment:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; color: #ef4444;">
+                        <p>Error loading sentiment analysis</p>
+                    </div>
+                `;
+            }
+        }
     </script>
+
 </body>
 </html>

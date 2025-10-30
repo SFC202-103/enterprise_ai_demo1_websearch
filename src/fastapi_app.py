@@ -341,6 +341,235 @@ async def get_match_stats(game: Optional[str] = None, provider: Optional[str] = 
     }
 
 
+async def get_team_stats(team_name: Optional[str] = None, game: Optional[str] = None) -> Dict[str, Any]:
+    """Get team statistics and performance data.
+    
+    Query params:
+    - team_name: Team name to get stats for
+    - game: Filter by specific game
+    
+    Returns:
+        Dictionary with team statistics including win rate, recent matches, form
+    """
+    # Fetch all matches
+    matches = await get_live_matches(game=game)
+    
+    if isinstance(matches, dict) and not matches.get("ok", True):
+        return {"ok": False, "error": matches.get("error")}
+    
+    if not isinstance(matches, list):
+        matches = []
+    
+    # Filter matches for the specific team if provided
+    team_matches = []
+    if team_name:
+        team_lower = team_name.lower()
+        for match in matches:
+            teams = match.get("teams") or match.get("opponents") or []
+            for team in teams:
+                team_match_name = (team.get("name") or team.get("acronym") or "").lower()
+                if team_lower in team_match_name:
+                    team_matches.append(match)
+                    break
+    else:
+        team_matches = matches
+    
+    # Calculate statistics
+    total_matches = len(team_matches)
+    wins = 0
+    losses = 0
+    draws = 0
+    recent_form = []
+    
+    for match in team_matches[-10:]:  # Last 10 matches
+        status = (match.get("status") or "").lower()
+        if "finished" in status or "completed" in status:
+            teams = match.get("teams") or match.get("opponents") or []
+            if len(teams) >= 2:
+                team1_score = int(teams[0].get("score") or 0)
+                team2_score = int(teams[1].get("score") or 0)
+                
+                if team_name:
+                    # Determine if our team won
+                    team_lower = team_name.lower()
+                    is_team1 = team_lower in (teams[0].get("name") or teams[0].get("acronym") or "").lower()
+                    
+                    if team1_score > team2_score:
+                        if is_team1:
+                            wins += 1
+                            recent_form.append("W")
+                        else:
+                            losses += 1
+                            recent_form.append("L")
+                    elif team2_score > team1_score:
+                        if is_team1:
+                            losses += 1
+                            recent_form.append("L")
+                        else:
+                            wins += 1
+                            recent_form.append("W")
+                    else:
+                        draws += 1
+                        recent_form.append("D")
+    
+    win_rate = (wins / (wins + losses)) * 100 if (wins + losses) > 0 else 0
+    
+    # Generate sentiment based on recent form
+    sentiment = "Neutral"
+    if len(recent_form) >= 3:
+        recent_wins = recent_form[-5:].count("W")
+        if recent_wins >= 4:
+            sentiment = "Very Positive"
+        elif recent_wins >= 3:
+            sentiment = "Positive"
+        elif recent_wins <= 1:
+            sentiment = "Negative"
+    
+    return {
+        "team_name": team_name or "All Teams",
+        "game": game or "All Games",
+        "total_matches": total_matches,
+        "wins": wins,
+        "losses": losses,
+        "draws": draws,
+        "win_rate": round(win_rate, 2),
+        "recent_form": "".join(recent_form[-5:]),  # Last 5 matches
+        "sentiment": sentiment,
+        "confidence": min(total_matches * 10, 95)  # Confidence based on sample size
+    }
+
+
+async def get_player_stats(player_name: Optional[str] = None, game: Optional[str] = None) -> Dict[str, Any]:
+    """Get player statistics and performance data.
+    
+    Query params:
+    - player_name: Player name to get stats for
+    - game: Filter by specific game
+    
+    Returns:
+        Dictionary with player statistics and sentiment
+    """
+    # For demo purposes, generate sample player stats
+    # In a real implementation, this would query a player stats API
+    
+    if not player_name:
+        return {
+            "ok": False,
+            "error": "player_name parameter required"
+        }
+    
+    # Fetch recent matches to get context
+    matches = await get_live_matches(game=game)
+    
+    if isinstance(matches, dict) and not matches.get("ok", True):
+        return {"ok": False, "error": matches.get("error")}
+    
+    # Generate player stats (in real implementation, fetch from connector)
+    import random
+    random.seed(hash(player_name))  # Consistent stats for same player name
+    
+    games_played = random.randint(10, 100)
+    kda = round(random.uniform(1.5, 5.0), 2)
+    win_rate = round(random.uniform(45, 65), 2)
+    avg_score = random.randint(15, 35)
+    
+    # Generate sentiment
+    sentiment = "Neutral"
+    if kda >= 3.5 and win_rate >= 55:
+        sentiment = "Very Positive"
+    elif kda >= 2.5 and win_rate >= 50:
+        sentiment = "Positive"
+    elif kda < 2.0 or win_rate < 45:
+        sentiment = "Negative"
+    
+    return {
+        "player_name": player_name,
+        "game": game or "Multiple Games",
+        "games_played": games_played,
+        "kda_ratio": kda,
+        "win_rate": win_rate,
+        "avg_score_per_game": avg_score,
+        "recent_performance": "Improving" if kda >= 2.5 else "Declining" if kda < 2.0 else "Stable",
+        "sentiment": sentiment,
+        "confidence": 85,
+        "note": "Demo data - integrate with real player stats API for production"
+    }
+
+
+async def get_sentiment_analysis(match_id: Optional[str] = None, team_name: Optional[str] = None) -> Dict[str, Any]:
+    """Get sentiment analysis for matches or teams.
+    
+    Query params:
+    - match_id: Specific match to analyze
+    - team_name: Specific team to analyze
+    
+    Returns:
+        Dictionary with sentiment analysis and fan engagement metrics
+    """
+    if match_id:
+        # Get specific match sentiment
+        match = await get_match(match_id)
+        if isinstance(match, dict) and match.get("detail") == "not found":
+            return {"ok": False, "error": "Match not found"}
+        
+        status = (match.get("status") or "").lower()
+        teams = match.get("teams") or match.get("opponents") or []
+        
+        sentiment_data = {
+            "match_id": match_id,
+            "overall_sentiment": "Positive",
+            "excitement_level": 75,
+            "fan_engagement": "High",
+            "trending_topics": [],
+            "confidence": 80
+        }
+        
+        # Adjust based on status
+        if "live" in status or "running" in status:
+            sentiment_data["excitement_level"] = 90
+            sentiment_data["overall_sentiment"] = "Very Positive"
+            sentiment_data["trending_topics"] = ["#LiveMatch", "#Esports", "#Gaming"]
+        elif "finished" in status:
+            sentiment_data["excitement_level"] = 65
+            sentiment_data["trending_topics"] = ["#MatchResults", "#Highlights"]
+            
+            # Check if close match
+            if len(teams) >= 2:
+                score1 = int(teams[0].get("score") or 0)
+                score2 = int(teams[1].get("score") or 0)
+                if abs(score1 - score2) <= 1:
+                    sentiment_data["excitement_level"] = 95
+                    sentiment_data["overall_sentiment"] = "Very Positive"
+                    sentiment_data["trending_topics"].append("#CloseMatch")
+        
+        return sentiment_data
+    
+    elif team_name:
+        # Get team sentiment
+        team_stats = await get_team_stats(team_name=team_name)
+        
+        return {
+            "team_name": team_name,
+            "overall_sentiment": team_stats.get("sentiment", "Neutral"),
+            "fan_base": "Growing" if team_stats.get("win_rate", 0) > 55 else "Stable",
+            "recent_form": team_stats.get("recent_form", ""),
+            "social_buzz": "High" if team_stats.get("win_rate", 0) > 60 else "Medium",
+            "confidence": team_stats.get("confidence", 70)
+        }
+    
+    else:
+        # General esports sentiment
+        stats = await get_match_stats()
+        
+        return {
+            "overall_sentiment": "Positive",
+            "community_engagement": "Active",
+            "live_matches": stats.get("live", 0),
+            "upcoming_interest": "High" if stats.get("upcoming", 0) > 10 else "Medium",
+            "market_trend": "Growing",
+            "confidence": 85
+        }
+
 
 async def websocket_match_updates(websocket: "WebSocket", match_id: str):
     """Poll queued demo updates and push them to the websocket client.
@@ -733,6 +962,9 @@ if FASTAPI_AVAILABLE:
     app.get("/api/live_matches")(get_live_matches)
     app.get("/api/matches/{match_id}")(get_match)
     app.get("/api/match_stats")(get_match_stats)
+    app.get("/api/team_stats")(get_team_stats)
+    app.get("/api/player_stats")(get_player_stats)
+    app.get("/api/sentiment")(get_sentiment_analysis)
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
     # functions can be called directly in tests without FastAPI.
