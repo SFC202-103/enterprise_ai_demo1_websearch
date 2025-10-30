@@ -77,10 +77,15 @@ def test_get_live_matches_status_filter_with_scheduled_time():
         with patch("src.connectors.opendota_connector.OpenDotaConnector", side_effect=Exception()):
             with patch("src.connectors.riot_esports_connector.RiotEsportsConnector", side_effect=Exception()):
                 with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                    result = asyncio.run(fa.get_live_matches(status="upcoming"))
-                    
-                    # Should include match with scheduled_time
-                    assert any(m["id"] == "m1" for m in result)
+                    with patch("src.connectors.hltv_connector.HLTVConnector", side_effect=Exception()):
+                        with patch("src.connectors.battlefy_connector.BattlefyConnector", side_effect=Exception()):
+                            with patch("src.connectors.apex_connector.ApexLegendsConnector", side_effect=Exception()):
+                                with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector", side_effect=Exception()):
+                                    with patch("src.connectors.liquipedia_connector.LiquipediaConnector", side_effect=Exception()):
+                                        result = asyncio.run(fa.get_live_matches(status="upcoming"))
+                                        
+                                        # Should include match with scheduled_time
+                                        assert any(m["id"] == "m1" for m in result)
     
     fa._fixture_data["matches"] = original
 
@@ -97,10 +102,15 @@ def test_get_live_matches_status_filter_empty_status_string():
         with patch("src.connectors.opendota_connector.OpenDotaConnector", side_effect=Exception()):
             with patch("src.connectors.riot_esports_connector.RiotEsportsConnector", side_effect=Exception()):
                 with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                    result = asyncio.run(fa.get_live_matches(status="upcoming"))
-                    
-                    # Should handle empty status string
-                    assert isinstance(result, list)
+                    with patch("src.connectors.hltv_connector.HLTVConnector", side_effect=Exception()):
+                        with patch("src.connectors.battlefy_connector.BattlefyConnector", side_effect=Exception()):
+                            with patch("src.connectors.apex_connector.ApexLegendsConnector", side_effect=Exception()):
+                                with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector", side_effect=Exception()):
+                                    with patch("src.connectors.liquipedia_connector.LiquipediaConnector", side_effect=Exception()):
+                                        result = asyncio.run(fa.get_live_matches(status="upcoming"))
+                                        
+                                        # Should handle empty status string
+                                        assert isinstance(result, list)
     
     fa._fixture_data["matches"] = original
 
@@ -131,10 +141,15 @@ def test_get_live_matches_pandascore_exception_handling():
             with patch("src.connectors.opendota_connector.OpenDotaConnector", side_effect=Exception()):
                 with patch("src.connectors.riot_esports_connector.RiotEsportsConnector", side_effect=Exception()):
                     with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                        result = asyncio.run(fa.get_live_matches())
-                        
-                        # Should handle exception and fall back to fixture
-                        assert isinstance(result, list)
+                        with patch("src.connectors.hltv_connector.HLTVConnector", side_effect=Exception()):
+                            with patch("src.connectors.battlefy_connector.BattlefyConnector", side_effect=Exception()):
+                                with patch("src.connectors.apex_connector.ApexLegendsConnector", side_effect=Exception()):
+                                    with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector", side_effect=Exception()):
+                                        with patch("src.connectors.liquipedia_connector.LiquipediaConnector", side_effect=Exception()):
+                                            result = asyncio.run(fa.get_live_matches())
+                                            
+                                            # Should handle exception and fall back to fixture
+                                            assert isinstance(result, list)
 
 
 def test_get_match_id_not_in_fixture():

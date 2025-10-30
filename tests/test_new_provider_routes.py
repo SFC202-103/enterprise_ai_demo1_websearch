@@ -113,10 +113,15 @@ def test_get_live_matches_aggregation_pandascore():
             with patch("src.connectors.riot_esports_connector.RiotEsportsConnector", side_effect=Exception()):
                 with patch("src.connectors.opendota_connector.OpenDotaConnector", side_effect=Exception()):
                     with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                        result = asyncio.run(fa.get_live_matches())
-                        
-                        assert len(result) >= 1
-                        assert any(m.get("provider") == "PandaScore" for m in result)
+                        with patch("src.connectors.hltv_connector.HLTVConnector", side_effect=Exception()):
+                            with patch("src.connectors.battlefy_connector.BattlefyConnector", side_effect=Exception()):
+                                with patch("src.connectors.apex_connector.ApexLegendsConnector", side_effect=Exception()):
+                                    with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector", side_effect=Exception()):
+                                        with patch("src.connectors.liquipedia_connector.LiquipediaConnector", side_effect=Exception()):
+                                            result = asyncio.run(fa.get_live_matches())
+                                            
+                                            assert len(result) >= 1
+                                            assert any(m.get("provider") == "PandaScore" for m in result)
 
 
 def test_get_live_matches_aggregation_opendota():
@@ -224,10 +229,15 @@ def test_get_live_matches_cache_keys_include_provider():
             with patch("src.connectors.riot_esports_connector.RiotEsportsConnector", side_effect=Exception()):
                 with patch("src.connectors.opendota_connector.OpenDotaConnector", side_effect=Exception()):
                     with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                        asyncio.run(fa.get_live_matches())
-                        
-                        # Check that cache keys include provider names
-                        assert any("pandascore" in key.lower() for key in cache_keys)
+                        with patch("src.connectors.hltv_connector.HLTVConnector", side_effect=Exception()):
+                            with patch("src.connectors.battlefy_connector.BattlefyConnector", side_effect=Exception()):
+                                with patch("src.connectors.apex_connector.ApexLegendsConnector", side_effect=Exception()):
+                                    with patch("src.connectors.marvel_rivals_connector.MarvelRivalsConnector", side_effect=Exception()):
+                                        with patch("src.connectors.liquipedia_connector.LiquipediaConnector", side_effect=Exception()):
+                                            asyncio.run(fa.get_live_matches())
+                                            
+                                            # Check that cache keys include provider names
+                                            assert any("pandascore" in key.lower() for key in cache_keys)
 
 
 def test_get_live_matches_all_connectors_fail_returns_fixture():
