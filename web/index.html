@@ -2074,62 +2074,6 @@
                 `;
             }
         }
-
-        async function loadSentiment() {
-            const container = document.getElementById('sentimentContainer');
-            
-            try {
-                const response = await fetch('/api/sentiment');
-                const sentiment = await response.json();
-                
-                // Create sentiment visualization
-                const sentimentEmoji = sentiment.overall_sentiment === 'Positive' || sentiment.overall_sentiment === 'Very Positive' ? '😊' : 
-                                      sentiment.overall_sentiment === 'Negative' ? '😟' : '😐';
-                
-                const engagementColor = sentiment.community_engagement === 'Active' ? '#10b981' : 
-                                       sentiment.community_engagement === 'Very Active' ? '#059669' : '#6b7280';
-                
-                container.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">${sentimentEmoji}</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Overall Sentiment</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${sentiment.overall_sentiment}</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Confidence: ${sentiment.confidence}%</div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">👥</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Community</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: ${engagementColor};">${sentiment.community_engagement}</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Engagement Level</div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">🔴</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Live Matches</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: #ef4444;">${sentiment.live_matches}</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Currently Active</div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">📈</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Market Trend</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: #10b981;">${sentiment.market_trend}</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Interest: ${sentiment.upcoming_interest}</div>
-                        </div>
-                    </div>
-                `;
-                
-            } catch (error) {
-                console.error('Error loading sentiment:', error);
-                container.innerHTML = `
-                    <div style="text-align: center; color: #ef4444;">
-                        <p>Error loading sentiment analysis</p>
-                    </div>
-                `;
-            }
-        }
     </script>
 
 </body>

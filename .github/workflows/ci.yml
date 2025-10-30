@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests with coverage
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-key-for-ci' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' && secrets.OPENAI_API_KEY || 'sk-test-key-for-ci' }}
         run: |
           # Ensure coverage uses the repository .coveragerc so intentional
           # omissions are respected.
