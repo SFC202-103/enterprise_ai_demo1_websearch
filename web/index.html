@@ -1772,6 +1772,12 @@
                 // Generate sentiment based on match data
                 const sentiment = generateSentiment(match);
                 
+                // Generate team and game links
+                const teams = match.teams || match.opponents || [];
+                const game = match.video_game || match.game || 'Unknown';
+                const gameLinks = sentiment.gameLinks || [];
+                const teamLinks = sentiment.teamLinks || [];
+                
                 sentimentContent.innerHTML = `
                     <div class="sentiment-card">
                         <div class="sentiment-label">Overall Sentiment</div>
@@ -1811,6 +1817,33 @@
                             ${sentiment.buzzPoints.map(point => `• ${point}`).join('<br>')}
                         </div>
                     </div>
+                    
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">🎮 Game Information</div>
+                        <div class="sentiment-description" style="margin-top: 10px;">
+                            <strong>Game:</strong> ${game}<br>
+                            ${gameLinks.length > 0 ? `
+                                <strong>Resources:</strong><br>
+                                ${gameLinks.map(link => `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`).join('<br>')}
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    ${teams.length > 0 ? `
+                    <div class="sentiment-card">
+                        <div class="sentiment-label">👥 Team Information</div>
+                        <div class="sentiment-description" style="margin-top: 10px;">
+                            ${teams.map((team, idx) => `
+                                <div style="margin-bottom: 15px;">
+                                    <strong>${team.name || team.acronym || `Team ${idx + 1}`}</strong><br>
+                                    ${teamLinks[idx] && teamLinks[idx].length > 0 ? `
+                                        ${teamLinks[idx].map(link => `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`).join('<br>')}
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
                 `;
             } catch (error) {
                 console.error('Error generating sentiment:', error);
@@ -1839,6 +1872,78 @@
             let importance = 50;
             let importanceText = 'Regular season match';
             let buzzPoints = [];
+            
+            // Generate game-specific links
+            let gameLinks = [];
+            if (game.includes('league') || game.includes('lol')) {
+                gameLinks.push(
+                    { text: 'LoL Esports Official', url: 'https://lolesports.com/' },
+                    { text: 'Riot Games', url: 'https://www.riotgames.com/' },
+                    { text: 'Leaguepedia', url: 'https://lol.fandom.com/wiki/League_of_Legends_Esports_Wiki' }
+                );
+            } else if (game.includes('csgo') || game.includes('counter-strike')) {
+                gameLinks.push(
+                    { text: 'HLTV (CS Hub)', url: 'https://www.hltv.org/' },
+                    { text: 'CS:GO Official', url: 'https://www.counter-strike.net/' },
+                    { text: 'Liquipedia CS', url: 'https://liquipedia.net/counterstrike/' }
+                );
+            } else if (game.includes('dota')) {
+                gameLinks.push(
+                    { text: 'Dota 2 Official', url: 'https://www.dota2.com/' },
+                    { text: 'Liquipedia Dota', url: 'https://liquipedia.net/dota2/' },
+                    { text: 'Dotabuff', url: 'https://www.dotabuff.com/' }
+                );
+            } else if (game.includes('valorant')) {
+                gameLinks.push(
+                    { text: 'VALORANT Esports', url: 'https://valorantesports.com/' },
+                    { text: 'VLR.gg', url: 'https://www.vlr.gg/' },
+                    { text: 'Liquipedia VALORANT', url: 'https://liquipedia.net/valorant/' }
+                );
+            } else if (game.includes('apex')) {
+                gameLinks.push(
+                    { text: 'ALGS Official', url: 'https://www.ea.com/games/apex-legends/compete/overview' },
+                    { text: 'Apex Legends Esports', url: 'https://liquipedia.net/apexlegends/' }
+                );
+            } else if (game.includes('marvel')) {
+                gameLinks.push(
+                    { text: 'Marvel Rivals Official', url: 'https://www.marvelrivals.com/' }
+                );
+            } else if (game.includes('overwatch')) {
+                gameLinks.push(
+                    { text: 'Overwatch League', url: 'https://overwatchleague.com/' },
+                    { text: 'Liquipedia OW', url: 'https://liquipedia.net/overwatch/' }
+                );
+            }
+            
+            // Generate team-specific links
+            let teamLinks = teams.map(team => {
+                const teamName = team.name || team.acronym || '';
+                const links = [];
+                
+                // Add Liquipedia link for the team
+                if (teamName) {
+                    const encodedName = encodeURIComponent(teamName.replace(/ /g, '_'));
+                    if (game.includes('league') || game.includes('lol')) {
+                        links.push({ text: 'Leaguepedia', url: `https://lol.fandom.com/wiki/${encodedName}` });
+                    } else if (game.includes('csgo') || game.includes('counter-strike')) {
+                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/counterstrike/${encodedName}` });
+                    } else if (game.includes('dota')) {
+                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/dota2/${encodedName}` });
+                    } else if (game.includes('valorant')) {
+                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/valorant/${encodedName}` });
+                    }
+                    
+                    // Add Twitter/X search link
+                    links.push({ text: 'Twitter/X', url: `https://twitter.com/search?q=${encodeURIComponent(teamName)}&src=typed_query` });
+                }
+                
+                // Add streaming links if available
+                if (team.streaming_link) {
+                    links.push({ text: 'Live Stream', url: team.streaming_link });
+                }
+                
+                return links;
+            });
             
             // Finished matches have post-game analysis sentiment
             if (status === 'finished') {
@@ -1964,7 +2069,9 @@
                 excitementText,
                 importance,
                 importanceText,
-                buzzPoints
+                buzzPoints,
+                gameLinks,
+                teamLinks
             };
         }
 
