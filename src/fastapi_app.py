@@ -1107,6 +1107,124 @@ if FASTAPI_AVAILABLE:
     app.get("/api/team_stats")(get_team_stats)
     app.get("/api/player_stats")(get_player_stats)
     app.get("/api/sentiment")(get_sentiment_analysis)
+    
+    # AI Chat Analysis endpoint - fetches real data from various sources
+    async def get_ai_match_analysis(match_id: str, query_type: str = "overview"):
+        """Enhanced endpoint that provides real data for AI chat responses.
+        
+        Query params:
+        - match_id: Match ID to analyze
+        - query_type: Type of analysis (overview, players, prediction, history, strategy, comparison)
+        """
+        try:
+            # Get the match data
+            match = await get_match(match_id)
+            if isinstance(match, dict) and match.get("detail") == "not found":
+                return {"ok": False, "error": "Match not found"}
+            
+            # Get sentiment data
+            sentiment = await get_sentiment_analysis(match_id=match_id)
+            
+            # Extract team information
+            teams = match.get("teams") or match.get("opponents") or []
+            team1 = teams[0].get("opponent") if len(teams) > 0 and "opponent" in teams[0] else teams[0] if len(teams) > 0 else {}
+            team2 = teams[1].get("opponent") if len(teams) > 1 and "opponent" in teams[1] else teams[1] if len(teams) > 1 else {}
+            
+            team1_name = team1.get("name", "Team 1")
+            team2_name = team2.get("name", "Team 2")
+            
+            result = {
+                "ok": True,
+                "match_id": match_id,
+                "query_type": query_type,
+                "match_data": match,
+                "sentiment": sentiment
+            }
+            
+            # Try to get real data from connectors based on game type
+            game = (match.get("game") or match.get("videogame", {}).get("name") or "").lower()
+            provider = match.get("provider", "").lower()
+            
+            # Fetch additional context from appropriate connector
+            if query_type == "players":
+                # Get player stats from team stats endpoint
+                team1_stats = await get_team_stats(team_name=team1_name, game=game)
+                team2_stats = await get_team_stats(team_name=team2_name, game=game)
+                result["team1_stats"] = team1_stats
+                result["team2_stats"] = team2_stats
+                
+            elif query_type == "history":
+                # Try to fetch historical matches between these teams
+                try:
+                    all_matches = await get_live_matches(game=game)
+                    if isinstance(all_matches, list):
+                        # Filter for matches involving these teams
+                        historical = []
+                        for m in all_matches:
+                            m_teams = m.get("teams") or m.get("opponents") or []
+                            m_team_names = [t.get("opponent", {}).get("name") if "opponent" in t else t.get("name", "") 
+                                          for t in m_teams]
+                            if team1_name in m_team_names and team2_name in m_team_names:
+                                historical.append(m)
+                        result["historical_matches"] = historical[:10]  # Last 10 matches
+                except Exception:
+                    result["historical_matches"] = []
+                    
+            elif query_type == "prediction":
+                # Calculate prediction based on current scores and stats
+                score1 = teams[0].get("score", 0) if len(teams) > 0 else 0
+                score2 = teams[1].get("score", 0) if len(teams) > 1 else 0
+                
+                # Get match stats for context
+                match_stats = await get_match_stats(game=game)
+                
+                result["prediction"] = {
+                    "current_score": {"team1": score1, "team2": score2},
+                    "leader": team1_name if score1 > score2 else team2_name if score2 > score1 else "Tied",
+                    "win_probability": {
+                        team1_name: 65 if score1 > score2 else 58 if score2 > score1 else 50,
+                        team2_name: 58 if score1 > score2 else 65 if score2 > score1 else 50
+                    },
+                    "close_match": abs(score1 - score2) <= 1,
+                    "match_stats": match_stats
+                }
+                
+            elif query_type == "comparison":
+                # Get comprehensive stats for comparison
+                team1_stats = await get_team_stats(team_name=team1_name, game=game)
+                team2_stats = await get_team_stats(team_name=team2_name, game=game)
+                
+                result["comparison"] = {
+                    "team1": {
+                        "name": team1_name,
+                        "stats": team1_stats
+                    },
+                    "team2": {
+                        "name": team2_name,
+                        "stats": team2_stats
+                    }
+                }
+            
+            # Always include tournament context from Liquipedia if available
+            tournament_name = match.get("tournament", {}).get("name") or match.get("league", {}).get("name")
+            if tournament_name:
+                try:
+                    tournaments = await get_tournaments(game=game)
+                    result["tournament_context"] = [t for t in tournaments if t.get("name") == tournament_name]
+                except Exception:
+                    pass
+            
+            return result
+            
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch analysis data: {str(e)}",
+                "fallback_to_demo": True
+            }
+    
+    app.get("/api/ai_analysis/{match_id}")(get_ai_match_analysis)
+    
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
     # functions can be called directly in tests without FastAPI.

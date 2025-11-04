@@ -1070,12 +1070,45 @@
             // Show typing indicator
             showTypingIndicator();
             
-            // Simulate AI response (replace with actual API call)
-            setTimeout(() => {
+            // Determine query type from message
+            const queryType = determineQueryType(message);
+            
+            try {
+                // Fetch real data from backend API
+                const response = await fetch(`/api/ai_analysis/${matchId}?query_type=${queryType}`);
+                const data = await response.json();
+                
                 removeTypingIndicator();
-                const response = generateAiResponse(matchId, message);
-                addChatMessage('ai', response);
-            }, 1500);
+                
+                if (data.ok) {
+                    // Generate intelligent response using real data
+                    const aiResponse = generateAiResponseWithData(message, data);
+                    addChatMessage('ai', aiResponse);
+                } else {
+                    // Fallback to demo mode
+                    const fallbackResponse = generateAiResponse(matchId, message);
+                    addChatMessage('ai', fallbackResponse);
+                }
+            } catch (error) {
+                // Error handling - fallback to demo responses
+                console.error('AI analysis error:', error);
+                removeTypingIndicator();
+                const fallbackResponse = generateAiResponse(matchId, message);
+                addChatMessage('ai', fallbackResponse);
+            }
+        }
+        
+        // Determine query type from message content
+        function determineQueryType(message) {
+            const msg = message.toLowerCase();
+            
+            if (msg.match(/player|stat|kda|performance|mvp|score|rating/)) return 'players';
+            if (msg.match(/predict|win|probability|chance|winner|odds/)) return 'prediction';
+            if (msg.match(/history|past|previous|record|head.*to.*head|h2h/)) return 'history';
+            if (msg.match(/strateg|tactic|playstyle|matchup|draft|composition/)) return 'strategy';
+            if (msg.match(/compar|versus|vs|difference|better|stronger/)) return 'comparison';
+            
+            return 'overview';
         }
         
         // Ask predefined question
@@ -1144,6 +1177,93 @@
         function removeTypingIndicator() {
             const indicator = document.getElementById('typingIndicator');
             if (indicator) indicator.remove();
+        }
+        
+        // Generate AI response using real data from backend
+        function generateAiResponseWithData(question, apiData) {
+            const match = apiData.match_data;
+            const sentiment = apiData.sentiment;
+            const queryType = apiData.query_type;
+            
+            const teams = match.teams || match.opponents || [];
+            const team1 = teams[0]?.opponent || teams[0] || { name: 'Team 1' };
+            const team2 = teams[1]?.opponent || teams[1] || { name: 'Team 2' };
+            const game = getGameInfo(match);
+            
+            // Generate response based on query type and real data
+            if (queryType === 'players' && apiData.team1_stats && apiData.team2_stats) {
+                return `
+                    <strong>📊 Player Statistics</strong><br><br>
+                    <strong>${team1.name}:</strong><br>
+                    ${formatTeamStats(apiData.team1_stats)}<br><br>
+                    <strong>${team2.name}:</strong><br>
+                    ${formatTeamStats(apiData.team2_stats)}<br><br>
+                    ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                `;
+            }
+            
+            if (queryType === 'prediction' && apiData.prediction) {
+                const pred = apiData.prediction;
+                const team1Name = team1.name;
+                const team2Name = team2.name;
+                return `
+                    <strong>🎯 Match Prediction</strong><br><br>
+                    <strong>Current Score:</strong> ${pred.current_score.team1} - ${pred.current_score.team2}<br>
+                    <strong>Leader:</strong> ${pred.leader}<br><br>
+                    <strong>Win Probability:</strong><br>
+                    • ${team1Name}: ${pred.win_probability[team1Name]}%<br>
+                    • ${team2Name}: ${pred.win_probability[team2Name]}%<br><br>
+                    ${pred.close_match ? '⚠️ This is a very close match! Expect intense gameplay.' : ''}
+                `;
+            }
+            
+            if (queryType === 'history' && apiData.historical_matches) {
+                const history = apiData.historical_matches;
+                if (history.length === 0) {
+                    return `<strong>📜 Head-to-Head History</strong><br><br>No recent matches found between these teams.`;
+                }
+                return `
+                    <strong>📜 Head-to-Head History</strong><br><br>
+                    Found ${history.length} recent match(es):<br><br>
+                    ${history.map((m, i) => {
+                        const mTeams = m.teams || m.opponents || [];
+                        const mScore1 = mTeams[0]?.score || 0;
+                        const mScore2 = mTeams[1]?.score || 0;
+                        return `${i + 1}. ${mTeams[0]?.opponent?.name || mTeams[0]?.name} ${mScore1} - ${mScore2} ${mTeams[1]?.opponent?.name || mTeams[1]?.name}`;
+                    }).join('<br>')}
+                `;
+            }
+            
+            if (queryType === 'comparison' && apiData.comparison) {
+                const comp = apiData.comparison;
+                return `
+                    <strong>⚖️ Team Comparison</strong><br><br>
+                    <strong>${comp.team1.name}</strong><br>
+                    ${formatTeamStats(comp.team1.stats)}<br><br>
+                    <strong>${comp.team2.name}</strong><br>
+                    ${formatTeamStats(comp.team2.stats)}<br><br>
+                    ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                `;
+            }
+            
+            // Default overview response
+            return `
+                <strong>Match Overview: ${team1.name} vs ${team2.name}</strong><br><br>
+                <strong>Game:</strong> ${game}<br>
+                <strong>Tournament:</strong> ${match.tournament?.name || match.league?.name || 'Unknown'}<br>
+                <strong>Status:</strong> ${getMatchStatus(match)}<br><br>
+                ${sentiment.summary ? `<em>${sentiment.summary}</em><br><br>` : ''}
+                Ask me about player stats, predictions, or match history!
+            `;
+        }
+        
+        // Format team stats from API data
+        function formatTeamStats(stats) {
+            if (!stats || !stats.players) return 'No statistics available';
+            
+            return stats.players.map(p => 
+                `• ${p.name}: ${p.kda || 'N/A'} KDA, ${p.winrate || 'N/A'}% Win Rate`
+            ).join('<br>');
         }
         
         // Enhanced AI response generation with comprehensive question handling
