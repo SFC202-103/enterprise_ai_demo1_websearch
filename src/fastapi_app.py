@@ -25,7 +25,8 @@ except Exception:  # pragma: no cover
     FASTAPI_AVAILABLE = False
 
 
-_fixture_path = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "sample_responses.json"
+# Load match fixture data for demo purposes
+_fixture_path = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "matches.json"
 _fixture_data: Dict[str, Any] = {}
 if _fixture_path.exists():
     try:
@@ -33,6 +34,15 @@ if _fixture_path.exists():
             _fixture_data = json.load(fh)
     except Exception:  # pragma: no cover
         _fixture_data = {}
+else:
+    # Fallback to sample_responses.json for backward compatibility
+    _fallback_path = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "sample_responses.json"
+    if _fallback_path.exists():
+        try:
+            with open(_fallback_path, "r", encoding="utf-8") as fh:
+                _fixture_data = json.load(fh)
+        except Exception:  # pragma: no cover
+            _fixture_data = {}
 
 
 async def get_games() -> Dict[str, List[str]]:
@@ -99,6 +109,23 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
 
     Falls back to the local fixture data when connectors are not configured.
     """
+    # If no API keys are configured, use fixture data immediately for fast loading
+    import os
+    has_api_keys = os.getenv("PANDASCORE_TOKEN") or os.getenv("RIOT_API_KEY")
+    
+    if not has_api_keys:
+        # Fast path: return fixture data immediately
+        matches = _fixture_data.get("matches", [])
+        if game:
+            matches = [m for m in matches if m.get("video_game") == game or m.get("game") == game]
+        if status:
+            s = status.lower()
+            if s == "running" or s == "live":
+                matches = [m for m in matches if "running" in (m.get("status") or "").lower()]
+            elif s in ("upcoming", "scheduled"):
+                matches = [m for m in matches if "upcoming" in (m.get("status") or "").lower()]
+        return matches
+    
     # Prefer explicit provider selection
     if provider:
         p = provider.lower()

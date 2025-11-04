@@ -1,0 +1,195 @@
+{
+  "matches": [
+    {
+      "id": "demo_lol_1",
+      "title": "T1 vs Gen.G",
+      "status": "running",
+      "game": "League of Legends",
+      "videogame": {"name": "League of Legends", "slug": "lol"},
+      "video_game": "League of Legends",
+      "begin_at": "2025-11-04T18:00:00Z",
+      "scheduled_time": "2025-11-04T18:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "LCK", "id": "lck_2025"},
+      "tournament": {"name": "LCK Spring 2025", "id": "lck_spring_2025"},
+      "teams": [
+        {"id": "t1", "name": "T1", "acronym": "T1", "score": 1},
+        {"id": "geng", "name": "Gen.G", "acronym": "GEN", "score": 0}
+      ],
+      "opponents": [
+        {"opponent": {"id": "t1", "name": "T1", "acronym": "T1"}},
+        {"opponent": {"id": "geng", "name": "Gen.G", "acronym": "GEN"}}
+      ],
+      "match_type": "bo3",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/lck"}]
+    },
+    {
+      "id": "demo_csgo_1",
+      "title": "FaZe Clan vs Natus Vincere",
+      "status": "running",
+      "game": "CS:GO",
+      "videogame": {"name": "CS:GO", "slug": "cs-go"},
+      "video_game": "CS:GO",
+      "begin_at": "2025-11-04T19:30:00Z",
+      "scheduled_time": "2025-11-04T19:30:00Z",
+      "provider": "Demo",
+      "league": {"name": "ESL Pro League", "id": "esl_pro"},
+      "tournament": {"name": "ESL Pro League Season 18", "id": "esl_s18"},
+      "teams": [
+        {"id": "faze", "name": "FaZe Clan", "acronym": "FaZe", "score": 13},
+        {"id": "navi", "name": "Natus Vincere", "acronym": "NAVI", "score": 11}
+      ],
+      "opponents": [
+        {"opponent": {"id": "faze", "name": "FaZe Clan", "acronym": "FaZe"}},
+        {"opponent": {"id": "navi", "name": "Natus Vincere", "acronym": "NAVI"}}
+      ],
+      "match_type": "bo3",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/esl_csgo"}]
+    },
+    {
+      "id": "demo_dota2_1",
+      "title": "Team Spirit vs Team Liquid",
+      "status": "upcoming",
+      "game": "Dota 2",
+      "videogame": {"name": "Dota 2", "slug": "dota-2"},
+      "video_game": "Dota 2",
+      "begin_at": "2025-11-04T21:00:00Z",
+      "scheduled_time": "2025-11-04T21:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "DPC", "id": "dpc_2025"},
+      "tournament": {"name": "DPC Western Europe Tour 1", "id": "dpc_we_t1"},
+      "teams": [
+        {"id": "spirit", "name": "Team Spirit", "acronym": "Spirit", "score": 0},
+        {"id": "liquid", "name": "Team Liquid", "acronym": "Liquid", "score": 0}
+      ],
+      "opponents": [
+        {"opponent": {"id": "spirit", "name": "Team Spirit", "acronym": "Spirit"}},
+        {"opponent": {"id": "liquid", "name": "Team Liquid", "acronym": "Liquid"}}
+      ],
+      "match_type": "bo3",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/dota2ti"}]
+    },
+    {
+      "id": "demo_valorant_1",
+      "title": "Sentinels vs Cloud9",
+      "status": "running",
+      "game": "Valorant",
+      "videogame": {"name": "Valorant", "slug": "valorant"},
+      "video_game": "Valorant",
+      "begin_at": "2025-11-04T20:00:00Z",
+      "scheduled_time": "2025-11-04T20:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "VCT Americas", "id": "vct_americas"},
+      "tournament": {"name": "VCT Americas Stage 1", "id": "vct_am_s1"},
+      "teams": [
+        {"id": "sen", "name": "Sentinels", "acronym": "SEN", "score": 10},
+        {"id": "c9", "name": "Cloud9", "acronym": "C9", "score": 8}
+      ],
+      "opponents": [
+        {"opponent": {"id": "sen", "name": "Sentinels", "acronym": "SEN"}},
+        {"opponent": {"id": "c9", "name": "Cloud9", "acronym": "C9"}}
+      ],
+      "match_type": "bo3",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/valorant"}]
+    },
+    {
+      "id": "demo_rl_1",
+      "title": "G2 Esports vs NRG",
+      "status": "upcoming",
+      "game": "Rocket League",
+      "videogame": {"name": "Rocket League", "slug": "rl"},
+      "video_game": "Rocket League",
+      "begin_at": "2025-11-04T22:00:00Z",
+      "scheduled_time": "2025-11-04T22:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "RLCS", "id": "rlcs_2025"},
+      "tournament": {"name": "RLCS World Championship", "id": "rlcs_worlds"},
+      "teams": [
+        {"id": "g2", "name": "G2 Esports", "acronym": "G2", "score": 0},
+        {"id": "nrg", "name": "NRG", "acronym": "NRG", "score": 0}
+      ],
+      "opponents": [
+        {"opponent": {"id": "g2", "name": "G2 Esports", "acronym": "G2"}},
+        {"opponent": {"id": "nrg", "name": "NRG", "acronym": "NRG"}}
+      ],
+      "match_type": "bo5",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/rocketleague"}]
+    },
+    {
+      "id": "demo_lol_2",
+      "title": "Cloud9 vs Team Liquid",
+      "status": "upcoming",
+      "game": "League of Legends",
+      "videogame": {"name": "League of Legends", "slug": "lol"},
+      "video_game": "League of Legends",
+      "begin_at": "2025-11-04T23:00:00Z",
+      "scheduled_time": "2025-11-04T23:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "LCS", "id": "lcs_2025"},
+      "tournament": {"name": "LCS Spring 2025", "id": "lcs_spring"},
+      "teams": [
+        {"id": "c9_lol", "name": "Cloud9", "acronym": "C9", "score": 0},
+        {"id": "tl_lol", "name": "Team Liquid", "acronym": "TL", "score": 0}
+      ],
+      "opponents": [
+        {"opponent": {"id": "c9_lol", "name": "Cloud9", "acronym": "C9"}},
+        {"opponent": {"id": "tl_lol", "name": "Team Liquid", "acronym": "TL"}}
+      ],
+      "match_type": "bo3",
+      "streams_list": [{"raw_url": "https://www.twitch.tv/lcs"}]
+    },
+    {
+      "id": "demo_csgo_2",
+      "title": "Vitality vs Heroic",
+      "status": "finished",
+      "game": "CS:GO",
+      "videogame": {"name": "CS:GO", "slug": "cs-go"},
+      "video_game": "CS:GO",
+      "begin_at": "2025-11-04T16:00:00Z",
+      "scheduled_time": "2025-11-04T16:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "BLAST Premier", "id": "blast_premier"},
+      "tournament": {"name": "BLAST Premier Fall 2025", "id": "blast_fall"},
+      "teams": [
+        {"id": "vitality", "name": "Team Vitality", "acronym": "VIT", "score": 2},
+        {"id": "heroic", "name": "Heroic", "acronym": "HER", "score": 0}
+      ],
+      "opponents": [
+        {"opponent": {"id": "vitality", "name": "Team Vitality", "acronym": "VIT"}},
+        {"opponent": {"id": "heroic", "name": "Heroic", "acronym": "HER"}}
+      ],
+      "match_type": "bo3",
+      "results": [{"score": 2}, {"score": 0}]
+    },
+    {
+      "id": "demo_dota2_2",
+      "title": "OG vs Tundra Esports",
+      "status": "finished",
+      "game": "Dota 2",
+      "videogame": {"name": "Dota 2", "slug": "dota-2"},
+      "video_game": "Dota 2",
+      "begin_at": "2025-11-04T15:00:00Z",
+      "scheduled_time": "2025-11-04T15:00:00Z",
+      "provider": "Demo",
+      "league": {"name": "DPC", "id": "dpc_2025"},
+      "tournament": {"name": "DPC Western Europe Tour 1", "id": "dpc_we_t1"},
+      "teams": [
+        {"id": "og", "name": "OG", "acronym": "OG", "score": 1},
+        {"id": "tundra", "name": "Tundra Esports", "acronym": "Tundra", "score": 2}
+      ],
+      "opponents": [
+        {"opponent": {"id": "og", "name": "OG", "acronym": "OG"}},
+        {"opponent": {"id": "tundra", "name": "Tundra Esports", "acronym": "Tundra"}}
+      ],
+      "match_type": "bo3",
+      "results": [{"score": 1}, {"score": 2}]
+    }
+  ],
+  "tournaments": [
+    {"id": "lck_spring_2025", "name": "LCK Spring 2025", "game": "League of Legends"},
+    {"id": "esl_s18", "name": "ESL Pro League Season 18", "game": "CS:GO"},
+    {"id": "dpc_we_t1", "name": "DPC Western Europe Tour 1", "game": "Dota 2"},
+    {"id": "vct_am_s1", "name": "VCT Americas Stage 1", "game": "Valorant"},
+    {"id": "rlcs_worlds", "name": "RLCS World Championship", "game": "Rocket League"}
+  ]
+}
