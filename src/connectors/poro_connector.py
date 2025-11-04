@@ -487,6 +487,246 @@ class PoroConnector:
         except Exception as e:
             print(f"Error fetching pentakills from Poro: {e}")
             return []
+    
+    async def get_prolific_pentakill_players(self, min_pentakills: int = 10, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get players with multiple pentakill achievements (grouped aggregation).
+        
+        This demonstrates the 'group by' and 'having' functionality similar to:
+        cargo.query({
+            tables: ['Pentakills'],
+            groupBy: ['Pentakills.Name'],
+            having: 'COUNT(DateDisplay) > 10'
+        })
+        
+        Args:
+            min_pentakills: Minimum number of pentakills to qualify
+            limit: Maximum number of players to return
+            
+        Returns:
+            List of players with their pentakill counts
+        """
+        fields = [
+            'Pentakills.Name',
+            'COUNT(Pentakills.Date) AS PentakillCount'
+        ]
+        
+        try:
+            results = await self._cargo_query(
+                tables=['Pentakills'],
+                fields=fields,
+                group_by=['Pentakills.Name'],
+                order_by=[{'field': 'PentakillCount', 'desc': True}],
+                limit=limit
+            )
+            
+            # Filter by count (Cargo's HAVING clause simulation)
+            normalized = []
+            for player_data in results:
+                count = int(player_data.get('PentakillCount', 0))
+                if count >= min_pentakills:
+                    normalized.append({
+                        'player': player_data.get('Name'),
+                        'pentakill_count': count,
+                        'provider': 'poro'
+                    })
+            
+            return normalized
+        except Exception as e:
+            print(f"Error fetching prolific pentakill players from Poro: {e}")
+            return []
+    
+    async def get_team_with_roster(self, team_name: str) -> Dict[str, Any]:
+        """Get team information with full roster (demonstrates JOIN functionality).
+        
+        This demonstrates joining tables similar to:
+        cargo.query({
+            tables: ['Teams', 'Players'],
+            joinOn: [{left: 'Teams.Name', right: 'Players.Team'}],
+            where: 'Teams.Name = "G2 Esports"'
+        })
+        
+        Args:
+            team_name: Name of the team
+            
+        Returns:
+            Team data with roster information
+        """
+        fields = [
+            'Teams.Name',
+            'Teams.Region',
+            'Teams.Location',
+            'Players.Player',
+            'Players.Role',
+            'Players.Country'
+        ]
+        
+        try:
+            results = await self._cargo_query(
+                tables=['Teams', 'Players'],
+                fields=fields,
+                where=f'Teams.Name = "{team_name}"',
+                join_on=[{'left': 'Teams.Name', 'right': 'Players.Team'}],
+                limit=100
+            )
+            
+            if not results:
+                return {
+                    'ok': False,
+                    'error': f'Team "{team_name}" not found',
+                    'provider': 'poro'
+                }
+            
+            # Aggregate roster data
+            team_info = {
+                'name': results[0].get('Name'),
+                'region': results[0].get('Region'),
+                'location': results[0].get('Location'),
+                'provider': 'poro'
+            }
+            
+            roster = []
+            for player_data in results:
+                if player_data.get('Player'):
+                    roster.append({
+                        'name': player_data.get('Player'),
+                        'role': player_data.get('Role'),
+                        'country': player_data.get('Country')
+                    })
+            
+            team_info['roster'] = roster
+            team_info['roster_size'] = len(roster)
+            
+            return team_info
+        except Exception as e:
+            print(f"Error fetching team with roster from Poro: {e}")
+            return {'ok': False, 'error': str(e), 'provider': 'poro'}
+    
+    async def get_tournament_standings(
+        self,
+        tournament: str,
+        limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """Get tournament standings with win/loss records.
+        
+        This demonstrates complex aggregation across match results.
+        
+        Args:
+            tournament: Tournament name
+            limit: Maximum number of teams to return
+            
+        Returns:
+            List of teams with their standings
+        """
+        fields = [
+            'ScoreboardGames.Team1 AS Team',
+            'COUNT(ScoreboardGames.Winner) AS Matches',
+            'ScoreboardGames.Winner'
+        ]
+        
+        try:
+            # Get all matches for this tournament
+            results = await self._cargo_query(
+                tables=['ScoreboardGames'],
+                fields=['ScoreboardGames.Team1', 'ScoreboardGames.Team2', 'ScoreboardGames.Winner'],
+                where=f'ScoreboardGames.Tournament = "{tournament}"',
+                limit=500
+            )
+            
+            # Calculate standings
+            standings = {}
+            for match in results:
+                team1 = match.get('Team1')
+                team2 = match.get('Team2')
+                winner = match.get('Winner')
+                
+                # Initialize teams
+                if team1 and team1 not in standings:
+                    standings[team1] = {'wins': 0, 'losses': 0, 'matches': 0}
+                if team2 and team2 not in standings:
+                    standings[team2] = {'wins': 0, 'losses': 0, 'matches': 0}
+                
+                # Update records
+                if winner == '1' and team1:
+                    standings[team1]['wins'] += 1
+                    standings[team1]['matches'] += 1
+                    if team2:
+                        standings[team2]['losses'] += 1
+                        standings[team2]['matches'] += 1
+                elif winner == '2' and team2:
+                    standings[team2]['wins'] += 1
+                    standings[team2]['matches'] += 1
+                    if team1:
+                        standings[team1]['losses'] += 1
+                        standings[team1]['matches'] += 1
+            
+            # Format output
+            normalized = []
+            for team, record in standings.items():
+                win_rate = (record['wins'] / record['matches'] * 100) if record['matches'] > 0 else 0
+                normalized.append({
+                    'team': team,
+                    'wins': record['wins'],
+                    'losses': record['losses'],
+                    'matches': record['matches'],
+                    'win_rate': round(win_rate, 2),
+                    'tournament': tournament,
+                    'provider': 'poro'
+                })
+            
+            # Sort by wins (descending)
+            normalized.sort(key=lambda x: x['wins'], reverse=True)
+            
+            return normalized[:limit]
+        except Exception as e:
+            print(f"Error fetching tournament standings from Poro: {e}")
+            return []
+    
+    async def get_champion_statistics(
+        self,
+        tournament: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Get champion pick/ban statistics.
+        
+        This demonstrates complex queries with grouping and counting.
+        
+        Args:
+            tournament: Optional tournament filter
+            limit: Maximum number of champions to return
+            
+        Returns:
+            List of champions with pick/ban statistics
+        """
+        fields = [
+            'PicksAndBansS7.Champion',
+            'COUNT(PicksAndBansS7.Champion) AS PickCount'
+        ]
+        
+        where = f'PicksAndBansS7.Tournament = "{tournament}"' if tournament else None
+        
+        try:
+            results = await self._cargo_query(
+                tables=['PicksAndBansS7'],
+                fields=fields,
+                where=where,
+                group_by=['PicksAndBansS7.Champion'],
+                order_by=[{'field': 'PickCount', 'desc': True}],
+                limit=limit
+            )
+            
+            normalized = []
+            for champ in results:
+                normalized.append({
+                    'champion': champ.get('Champion'),
+                    'pick_count': int(champ.get('PickCount', 0)),
+                    'tournament': tournament,
+                    'provider': 'poro'
+                })
+            
+            return normalized
+        except Exception as e:
+            print(f"Error fetching champion statistics from Poro: {e}")
+            return []
 
 
 # Singleton instance for reuse

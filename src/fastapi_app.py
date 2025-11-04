@@ -1394,6 +1394,207 @@ if FASTAPI_AVAILABLE:
     app.get("/api/poro/matches")(get_poro_matches)
     app.get("/api/poro/pentakills")(get_poro_pentakills)
     
+    # Advanced Poro endpoints
+    async def get_poro_prolific_pentakills(min_pentakills: int = 10, limit: int = 50):
+        """Get players with multiple pentakills (GROUP BY demonstration).
+        
+        Query params:
+        - min_pentakills: Minimum pentakills to qualify (default 10)
+        - limit: Maximum number of players to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            players = await conn.get_prolific_pentakill_players(
+                min_pentakills=min_pentakills,
+                limit=limit
+            )
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "min_pentakills": min_pentakills,
+                "count": len(players),
+                "players": players
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch prolific pentakill players from Poro: {str(e)}"
+            }
+    
+    async def get_poro_team_roster(team_name: str):
+        """Get team with full roster (JOIN demonstration).
+        
+        Query params:
+        - team_name: Name of the team (required)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            team_data = await conn.get_team_with_roster(team_name=team_name)
+            
+            return {
+                "ok": team_data.get('ok', True),
+                "provider": "poro",
+                "team": team_data
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch team roster from Poro: {str(e)}"
+            }
+    
+    async def get_poro_tournament_standings(tournament: str, limit: int = 20):
+        """Get tournament standings with win/loss records.
+        
+        Query params:
+        - tournament: Tournament name (required)
+        - limit: Maximum number of teams (default 20)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            standings = await conn.get_tournament_standings(
+                tournament=tournament,
+                limit=limit
+            )
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "tournament": tournament,
+                "count": len(standings),
+                "standings": standings
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch tournament standings from Poro: {str(e)}"
+            }
+    
+    async def get_poro_champion_stats(tournament: Optional[str] = None, limit: int = 50):
+        """Get champion pick/ban statistics.
+        
+        Query params:
+        - tournament: Filter by tournament (optional)
+        - limit: Maximum number of champions (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            stats = await conn.get_champion_statistics(
+                tournament=tournament,
+                limit=limit
+            )
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "tournament": tournament or "all",
+                "count": len(stats),
+                "champions": stats
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch champion statistics from Poro: {str(e)}"
+            }
+    
+    # Register advanced Poro endpoints
+    app.get("/api/poro/prolific-pentakills")(get_poro_prolific_pentakills)
+    app.get("/api/poro/team-roster")(get_poro_team_roster)
+    app.get("/api/poro/tournament-standings")(get_poro_tournament_standings)
+    app.get("/api/poro/champion-stats")(get_poro_champion_stats)
+    
+    # Enhanced Riot API endpoints
+    async def get_riot_league_entries(
+        queue: str = 'RANKED_SOLO_5x5',
+        tier: str = 'CHALLENGER',
+        division: str = 'I',
+        page: int = 1,
+        platform: str = 'NA'
+    ):
+        """Get ranked league entries from Riot API.
+        
+        Query params:
+        - queue: Queue type (RANKED_SOLO_5x5, RANKED_FLEX_SR, RANKED_FLEX_TT)
+        - tier: Tier (CHALLENGER, GRANDMASTER, MASTER, DIAMOND, PLATINUM, etc.)
+        - division: Division (I, II, III, IV) - N/A for CHALLENGER/GRANDMASTER/MASTER
+        - page: Page number for pagination (default 1)
+        - platform: Platform region (NA, EUW, KR, BR, etc.)
+        """
+        try:
+            from src.connectors.riot_connector import RiotConnector
+            
+            conn = RiotConnector(platform=platform)
+            entries = conn.get_league_entries(
+                queue=queue,
+                tier=tier,
+                division=division,
+                page=page
+            )
+            
+            return {
+                "ok": True,
+                "provider": "riot",
+                "platform": platform,
+                "tier": tier,
+                "queue": queue,
+                "count": len(entries),
+                "entries": entries
+            }
+        except ValueError as e:
+            return {
+                "ok": False,
+                "error": str(e),
+                "hint": "Set RIOT_API_TOKEN environment variable"
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch league entries from Riot: {str(e)}"
+            }
+    
+    async def get_riot_summoner(summoner_name: str, platform: str = 'NA'):
+        """Get summoner profile by name from Riot API.
+        
+        Query params:
+        - summoner_name: Summoner name (required)
+        - platform: Platform region (NA, EUW, KR, BR, etc.)
+        """
+        try:
+            from src.connectors.riot_connector import RiotConnector
+            
+            conn = RiotConnector(platform=platform)
+            summoner = conn.get_summoner_by_name(summoner_name=summoner_name)
+            
+            return {
+                "ok": True,
+                "provider": "riot",
+                "platform": platform,
+                "summoner": summoner
+            }
+        except ValueError as e:
+            return {
+                "ok": False,
+                "error": str(e),
+                "hint": "Set RIOT_API_TOKEN environment variable"
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch summoner from Riot: {str(e)}"
+            }
+    
+    # Register enhanced Riot endpoints
+    app.get("/api/riot/league-entries")(get_riot_league_entries)
+    app.get("/api/riot/summoner")(get_riot_summoner)
+    
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
     # functions can be called directly in tests without FastAPI.

@@ -98,6 +98,10 @@ Navigate to `http://localhost:8000` to access the web interface.
   - Query params: `query_type` (overview, players, prediction, history, strategy, comparison)
 
 ### Poro (Leaguepedia) Endpoints
+
+📘 **[Full Poro API Guide](docs/PORO_API_GUIDE.md)** - Complete documentation with TypeScript → Python examples
+
+#### Basic Queries
 - `GET /api/poro/teams` - Get League of Legends teams from Leaguepedia
   - Query params: `region` (LEC, LCS, LCK, LPL, etc.), `limit` (max results, default 50)
 - `GET /api/poro/tournaments` - Get LoL tournaments from Leaguepedia
@@ -108,6 +112,22 @@ Navigate to `http://localhost:8000` to access the web interface.
   - Query params: `tournament` (filter by tournament), `team` (filter by team), `limit` (max results)
 - `GET /api/poro/pentakills` - Get pentakill achievements from Leaguepedia
   - Query params: `player` (filter by player name), `limit` (max results)
+
+#### Advanced Queries (GROUP BY, JOIN, Aggregations)
+- `GET /api/poro/prolific-pentakills` - Players with multiple pentakills (GROUP BY aggregation)
+  - Query params: `min_pentakills` (default 10), `limit` (max results)
+- `GET /api/poro/team-roster` - Team with full roster (JOIN example)
+  - Query params: `team_name` (required, e.g., "G2 Esports")
+- `GET /api/poro/tournament-standings` - Tournament standings with win/loss records
+  - Query params: `tournament` (required, e.g., "LEC 2024 Spring"), `limit` (max teams)
+- `GET /api/poro/champion-stats` - Champion pick/ban statistics (GROUP BY)
+  - Query params: `tournament` (optional), `limit` (max champions)
+
+### Enhanced Riot API Endpoints
+- `GET /api/riot/league-entries` - Ranked league entries (Challenger, Grandmaster, Master, etc.)
+  - Query params: `queue` (RANKED_SOLO_5x5, RANKED_FLEX_SR), `tier` (CHALLENGER, etc.), `division` (I-IV), `page` (pagination), `platform` (NA, EUW, KR, etc.)
+- `GET /api/riot/summoner` - Get summoner profile by name
+  - Query params: `summoner_name` (required), `platform` (NA, EUW, KR, etc.)
 
 ### Administrative Endpoints
 - `GET /api/games` - List all supported games
