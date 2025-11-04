@@ -117,8 +117,9 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
                    os.getenv("HLTV_API_KEY") or
                    os.getenv("BATTLEFY_API_KEY"))
     
-    # If demo mode is enabled or no API keys are configured, use fixture data only
-    if use_demo_mode or not has_api_keys:
+    # If demo mode is enabled AND no explicit provider is requested, use fixture data only
+    # This allows tests to mock connectors by specifying a provider explicitly
+    if use_demo_mode and not provider and not has_api_keys:
         # Fast path: return fixture data immediately without calling any connectors
         matches = _fixture_data.get("matches", [])
         if game:
