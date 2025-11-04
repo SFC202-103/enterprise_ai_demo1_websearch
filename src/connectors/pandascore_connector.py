@@ -50,19 +50,44 @@ class PandaScoreConnector:
         # Small helper: return headers for requests.
         return {"Authorization": f"Bearer {self.token}"}
 
-    def get_matches(self, game: Optional[str] = None, per_page: int = 25) -> List[Dict[str, Any]]:
+    def get_matches(self, game: Optional[str] = None, per_page: int = 25, status: Optional[str] = None) -> List[Dict[str, Any]]:
         """Fetch and normalize matches.
+
+        Args:
+            game: Filter by video game (e.g., 'lol', 'csgo', 'dota2')
+            per_page: Number of results per page (max 100)
+            status: Filter by status ('running', 'not_started', 'finished')
 
         Raises ValueError if no token is configured.
         """
         if not self.token:
             raise ValueError("PANDASCORE_TOKEN must be set to fetch matches")
 
-        params: Dict[str, Any] = {"page[size]": per_page}
+        # Use more results per page and sort by begin_at to get most relevant matches
+        params: Dict[str, Any] = {
+            "page[size]": min(per_page, 100),  # PandaScore max is 100
+            "sort": "-begin_at",  # Sort by start time descending (most recent first)
+        }
+        
         if game:
-            params["filter[video_game]"] = game
+            # PandaScore uses lowercase game slugs
+            game_slug = game.lower().replace('-', '').replace('_', '')
+            if game_slug == 'csgo':
+                game_slug = 'cs-go'
+            elif game_slug == 'lol':
+                game_slug = 'league-of-legends'
+            elif game_slug == 'dota2':
+                game_slug = 'dota-2'
+            params["filter[videogame]"] = game_slug
+        
+        if status:
+            params["filter[status]"] = status
 
-        url = f"{self.BASE_URL}/matches"
+        # For live matches, use the running endpoint for better results
+        if status == 'running':
+            url = f"{self.BASE_URL}/matches/running"
+        else:
+            url = f"{self.BASE_URL}/matches"
         for attempt in range(self.max_retries + 1):
             try:
                 client = self._client_instance()
@@ -120,18 +145,38 @@ class PandaScoreConnector:
             # Extract video game information
             video_game_data = item.get("videogame") or item.get("video_game") or {}
             video_game_name = video_game_data.get("name") if isinstance(video_game_data, dict) else str(video_game_data) if video_game_data else None
+            
+            # Get league/tournament info
+            league_data = item.get("league") or {}
+            tournament_data = item.get("tournament") or item.get("serie") or {}
+            
+            # Get stream information
+            streams = item.get("streams_list") or item.get("streams") or []
+            stream_url = None
+            if streams and len(streams) > 0:
+                stream_url = streams[0].get("raw_url") or streams[0].get("embed_url")
 
             normalized.append({
                 "id": match_id,
                 "title": title,
                 "scheduled_time": scheduled,
+                "begin_at": item.get("begin_at"),
                 # PandaScore returns a status field like "running", "finished",
                 # include it when present so callers can filter by status.
                 "status": item.get("status"),
                 "teams": teams,
+                "opponents": [{"opponent": team} for team in teams],  # For compatibility
                 "video_game": video_game_name,
+                "videogame": {"name": video_game_name, "slug": video_game_data.get("slug")} if video_game_name else None,
                 "game": video_game_name,
                 "provider": "PandaScore",
+                "league": {"name": league_data.get("name"), "id": league_data.get("id")} if league_data else None,
+                "tournament": {"name": tournament_data.get("name"), "id": tournament_data.get("id")} if tournament_data else None,
+                "match_type": item.get("match_type") or item.get("number_of_games"),
+                "streams_list": streams,
+                "stream_url": stream_url,
+                "results": item.get("results"),
+                "games": item.get("games"),
             })
 
         return normalized

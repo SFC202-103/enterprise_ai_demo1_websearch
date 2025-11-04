@@ -152,8 +152,8 @@ def test_pandascore_game_param_sets_filter(monkeypatch):
             pass
 
         def get(self, url, headers=None, params=None):
-            # assert that the filter param was set by the connector
-            assert params and "filter[video_game]" in params
+            # assert that the filter param was set by the connector (updated to filter[videogame])
+            assert params and "filter[videogame]" in params
             return _make_resp([{"id": 21, "name": "G1"}])
 
     monkeypatch.setattr(httpx, "Client", FakeClient)
