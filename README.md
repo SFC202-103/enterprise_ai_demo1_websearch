@@ -15,7 +15,8 @@ A comprehensive real-time esports match tracking platform that aggregates live m
 - **Comprehensive Coverage**: Upcoming, live, and finished matches from multiple data sources
 
 ### Data Aggregation
-- **8 Data Connectors**: Integrates with PandaScore, Riot Games API, OpenDota, HLTV, Battlefy, Apex Stats, Marvel Rivals API, and Liquipedia
+- **9 Data Connectors**: Integrates with PandaScore, Riot Games API, OpenDota, HLTV, Battlefy, Apex Stats, Marvel Rivals API, Liquipedia, and **Poro (Leaguepedia)**
+- **Poro/Leaguepedia Integration**: Professional-grade League of Legends esports data from Leaguepedia's Cargo API
 - **Smart Caching**: Efficient data caching to minimize API calls and improve performance
 - **Unified Interface**: Single API that normalizes data from multiple sources
 
@@ -93,6 +94,20 @@ Navigate to `http://localhost:8000` to access the web interface.
   - Query params: `match_id` (analyze specific match), `team_name` (analyze specific team)
 - `GET /api/ai/chat` - Natural language Q&A about esports
   - Query params: `query` (your question)
+- `GET /api/ai_analysis/{match_id}` - Get real-time AI analysis for specific match
+  - Query params: `query_type` (overview, players, prediction, history, strategy, comparison)
+
+### Poro (Leaguepedia) Endpoints
+- `GET /api/poro/teams` - Get League of Legends teams from Leaguepedia
+  - Query params: `region` (LEC, LCS, LCK, LPL, etc.), `limit` (max results, default 50)
+- `GET /api/poro/tournaments` - Get LoL tournaments from Leaguepedia
+  - Query params: `year` (filter by year), `region` (filter by region), `limit` (max results)
+- `GET /api/poro/players` - Get LoL players from Leaguepedia
+  - Query params: `team` (filter by team), `role` (Top, Jungle, Mid, Bot, Support), `limit` (max results)
+- `GET /api/poro/matches` - Get LoL match results from Leaguepedia
+  - Query params: `tournament` (filter by tournament), `team` (filter by team), `limit` (max results)
+- `GET /api/poro/pentakills` - Get pentakill achievements from Leaguepedia
+  - Query params: `player` (filter by player name), `limit` (max results)
 
 ### Administrative Endpoints
 - `GET /api/games` - List all supported games
@@ -104,7 +119,7 @@ Navigate to `http://localhost:8000` to access the web interface.
 
 | Game | Connector | Features |
 |------|-----------|----------|
-| League of Legends | Riot API, PandaScore | Live matches, player stats, team data |
+| League of Legends | Riot API, PandaScore, **Poro/Leaguepedia** | Live matches, player stats, team data, historical records, pentakills |
 | CS:GO | HLTV, PandaScore | Tournament matches, team rankings |
 | Dota 2 | OpenDota, PandaScore | Live matches, player profiles, match history |
 | Apex Legends | Apex Stats | Tournament brackets, player stats |

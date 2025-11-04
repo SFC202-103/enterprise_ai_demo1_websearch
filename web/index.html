@@ -907,6 +907,14 @@
 
         // Show match details modal
         async function showMatchDetails(matchId) {
+            console.log('showMatchDetails called with matchId:', matchId);
+            
+            if (!matchId || matchId === 'undefined' || matchId === 'null') {
+                console.error('Invalid matchId:', matchId);
+                alert('Unable to load match details. Match ID is invalid.');
+                return;
+            }
+            
             const modal = document.getElementById('matchModal');
             const modalBody = document.getElementById('modalBody');
             
@@ -914,13 +922,26 @@
             modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading details...</p></div>';
             
             try {
+                console.log(`Fetching: /api/matches/${matchId} and /api/sentiment?match_id=${matchId}`);
+                
                 const [matchResponse, sentimentResponse] = await Promise.all([
                     fetch(`/api/matches/${matchId}`),
                     fetch(`/api/sentiment?match_id=${matchId}`)
                 ]);
                 
+                console.log('Match response status:', matchResponse.status);
+                console.log('Sentiment response status:', sentimentResponse.status);
+                
                 const match = await matchResponse.json();
                 const sentiment = await sentimentResponse.json();
+                
+                console.log('Match data:', match);
+                console.log('Sentiment data:', sentiment);
+                
+                // Ensure match has an id
+                if (!match.id) {
+                    match.id = matchId;
+                }
                 
                 modalBody.innerHTML = renderMatchDetails(match, sentiment);
                 
@@ -928,7 +949,17 @@
                 setTimeout(() => initializeAiChat(matchId), 100);
             } catch (error) {
                 console.error('Error loading match details:', error);
-                modalBody.innerHTML = '<p>Error loading match details.</p>';
+                modalBody.innerHTML = `
+                    <div style="padding: 2rem; text-align: center;">
+                        <span style="font-size: 3rem;">⚠️</span>
+                        <p style="color: var(--text-secondary); margin-top: 1rem;">
+                            Error loading match details. Please try again.
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem;">
+                            ${error.message}
+                        </p>
+                    </div>
+                `;
             }
         }
 
@@ -1111,8 +1142,29 @@
         
         // Initialize AI chat with match analysis
         async function initializeAiChat(matchId) {
+            console.log('initializeAiChat called with matchId:', matchId);
+            console.log('Available matches:', allMatches.length);
+            
+            if (!matchId || matchId === 'undefined') {
+                console.error('Invalid matchId in initializeAiChat:', matchId);
+                document.getElementById('initialAiMessage').innerHTML = `
+                    <strong>⚠️ Match Data Unavailable</strong><br><br>
+                    Unable to load match information. Please refresh the page and try again.
+                `;
+                return;
+            }
+            
             currentMatchData = allMatches.find(m => m.id === matchId);
-            if (!currentMatchData) return;
+            console.log('Found match data:', currentMatchData);
+            
+            if (!currentMatchData) {
+                console.warn('Match not found in allMatches:', matchId);
+                document.getElementById('initialAiMessage').innerHTML = `
+                    <strong>Match Analysis</strong><br><br>
+                    I'm your AI match analyst! Ask me anything about this match.
+                `;
+                return;
+            }
             
             const teams = currentMatchData.teams || currentMatchData.opponents || [];
             const team1 = teams[0]?.opponent || teams[0] || { name: 'Team 1' };
@@ -1133,9 +1185,21 @@
         
         // Send chat message
         async function sendChatMessage(matchId) {
+            console.log('sendChatMessage called with matchId:', matchId);
+            
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
-            if (!message) return;
+            if (!message) {
+                console.warn('Empty message, returning');
+                return;
+            }
+            
+            // Validate matchId
+            if (!matchId || matchId === 'undefined') {
+                console.error('Invalid matchId:', matchId);
+                addChatMessage('ai', 'Error: Unable to identify the match. Please refresh and try again.');
+                return;
+            }
             
             // Add user message to chat
             addChatMessage('user', message);
@@ -1149,9 +1213,11 @@
             
             try {
                 // Fetch real data from backend API
+                console.log(`Fetching: /api/ai_analysis/${matchId}?query_type=${queryType}`);
                 const response = await fetch(`/api/ai_analysis/${matchId}?query_type=${queryType}`);
                 const data = await response.json();
                 
+                console.log('AI analysis response:', data);
                 removeTypingIndicator();
                 
                 if (data.ok) {
@@ -1160,6 +1226,7 @@
                     addChatMessage('ai', aiResponse);
                 } else {
                     // Fallback to demo mode
+                    console.warn('AI analysis returned not ok, using fallback');
                     const fallbackResponse = generateAiResponse(matchId, message);
                     addChatMessage('ai', fallbackResponse);
                 }

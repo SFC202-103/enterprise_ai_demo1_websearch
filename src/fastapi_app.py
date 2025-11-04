@@ -308,6 +308,26 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
                 pass
         except Exception:
             pass
+    
+    # Try Poro (Leaguepedia) for League of Legends data
+    if not game or game.lower() in ['lol', 'league', 'league-of-legends', 'leagueoflegends']:
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            from src.connectors.cache import get_cached
+
+            conn = await get_poro_connector()
+            try:
+                key = f"poro:{game or 'lol'}:{status or ''}"
+                async def poro_loader():
+                    return await conn.get_matches(limit=25)
+                matches = get_cached(key, ttl=60.0, loader=poro_loader)  # Cache for 60s
+                if asyncio.iscoroutine(matches):
+                    matches = await matches
+                all_matches.extend(matches)
+            except Exception:
+                pass
+        except Exception:
+            pass
 
     # Try legacy Riot connector
     try:
@@ -1225,6 +1245,154 @@ if FASTAPI_AVAILABLE:
             }
     
     app.get("/api/ai_analysis/{match_id}")(get_ai_match_analysis)
+    
+    # Poro (Leaguepedia) endpoints for League of Legends data
+    async def get_poro_teams(region: Optional[str] = None, limit: int = 50):
+        """Get League of Legends teams from Leaguepedia.
+        
+        Query params:
+        - region: Filter by region (e.g., LEC, LCS, LCK, LPL)
+        - limit: Maximum number of teams to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            teams = await conn.get_teams(region=region, limit=limit)
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "count": len(teams),
+                "teams": teams
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch teams from Poro: {str(e)}"
+            }
+    
+    async def get_poro_tournaments(
+        year: Optional[int] = None,
+        region: Optional[str] = None,
+        limit: int = 50
+    ):
+        """Get League of Legends tournaments from Leaguepedia.
+        
+        Query params:
+        - year: Filter by year
+        - region: Filter by region
+        - limit: Maximum number of tournaments to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            tournaments = await conn.get_tournaments(year=year, region=region, limit=limit)
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "count": len(tournaments),
+                "tournaments": tournaments
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch tournaments from Poro: {str(e)}"
+            }
+    
+    async def get_poro_players(
+        team: Optional[str] = None,
+        role: Optional[str] = None,
+        limit: int = 50
+    ):
+        """Get League of Legends players from Leaguepedia.
+        
+        Query params:
+        - team: Filter by current team
+        - role: Filter by role (Top, Jungle, Mid, Bot, Support)
+        - limit: Maximum number of players to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            players = await conn.get_players(team=team, role=role, limit=limit)
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "count": len(players),
+                "players": players
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch players from Poro: {str(e)}"
+            }
+    
+    async def get_poro_matches(
+        tournament: Optional[str] = None,
+        team: Optional[str] = None,
+        limit: int = 50
+    ):
+        """Get League of Legends match results from Leaguepedia.
+        
+        Query params:
+        - tournament: Filter by tournament name
+        - team: Filter by team name
+        - limit: Maximum number of matches to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            matches = await conn.get_matches(tournament=tournament, team=team, limit=limit)
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "count": len(matches),
+                "matches": matches
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch matches from Poro: {str(e)}"
+            }
+    
+    async def get_poro_pentakills(player: Optional[str] = None, limit: int = 50):
+        """Get pentakill achievements from Leaguepedia.
+        
+        Query params:
+        - player: Filter by player name
+        - limit: Maximum number of pentakills to return (default 50)
+        """
+        try:
+            from src.connectors.poro_connector import get_poro_connector
+            
+            conn = await get_poro_connector()
+            pentakills = await conn.get_pentakills(player=player, limit=limit)
+            
+            return {
+                "ok": True,
+                "provider": "poro",
+                "count": len(pentakills),
+                "pentakills": pentakills
+            }
+        except Exception as e:
+            return {
+                "ok": False,
+                "error": f"Failed to fetch pentakills from Poro: {str(e)}"
+            }
+    
+    # Register Poro endpoints
+    app.get("/api/poro/teams")(get_poro_teams)
+    app.get("/api/poro/tournaments")(get_poro_tournaments)
+    app.get("/api/poro/players")(get_poro_players)
+    app.get("/api/poro/matches")(get_poro_matches)
+    app.get("/api/poro/pentakills")(get_poro_pentakills)
     
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
