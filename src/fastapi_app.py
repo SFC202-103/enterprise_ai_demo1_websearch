@@ -344,16 +344,20 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
 
 
 async def get_match(match_id: str) -> Any:
+    """Get a specific match by ID.
+    
+    Returns a match dictionary or a dict with 'detail' key if not found.
+    Never returns a JSONResponse to maintain consistent return type for callers.
+    """
     if not _fixture_data:  # pragma: no cover - Defensive fallback
-        if FASTAPI_AVAILABLE:
-            return JSONResponse(status_code=404, content={"detail": "not found"})
         return {"detail": "not found"}
+    
     matches = _fixture_data.get("matches", [])
     for m in matches:
         if str(m.get("id")) == str(match_id):
             return m
-    if FASTAPI_AVAILABLE:  # pragma: no cover - Not found path tested via endpoints
-        return JSONResponse(status_code=404, content={"detail": "not found"})
+    
+    # Always return dict, never JSONResponse, so callers can safely use .get()
     return {"detail": "not found"}
 
 
@@ -1044,7 +1048,15 @@ if FASTAPI_AVAILABLE:
     app.get("/api/db/tournaments")(list_db_tournaments)
     app.get("/api/matches")(get_matches)
     app.get("/api/live_matches")(get_live_matches)
-    app.get("/api/matches/{match_id}")(get_match)
+    
+    # Wrapper endpoint for get_match that returns 404 when match not found
+    async def get_match_endpoint(match_id: str):
+        result = await get_match(match_id)
+        if isinstance(result, dict) and result.get("detail") == "not found":
+            return JSONResponse(status_code=404, content=result)
+        return result
+    
+    app.get("/api/matches/{match_id}")(get_match_endpoint)
     app.get("/api/match_stats")(get_match_stats)
     app.get("/api/team_stats")(get_team_stats)
     app.get("/api/player_stats")(get_player_stats)
@@ -1115,6 +1127,121 @@ if FASTAPI_AVAILABLE:
             return {"ok": True, "tracked": None, "state": None}  # pragma: no cover
 
     app.get("/api/tracker/status")(tracker_status)  # pragma: no cover
+
+
+# ============================================================================
+# AI CHAT ENDPOINT: Natural Language Q&A about games and players
+# ============================================================================
+
+async def ai_chat(query: str) -> Dict[str, Any]:
+    """
+    AI-powered chat endpoint for natural language questions about esports.
+    
+    Users can ask questions like:
+    - "What games are currently live?"
+    - "Tell me about Team Liquid's recent performance"
+    - "Who is Faker and what are his stats?"
+    - "What's the score in the FaZe vs OpTic match?"
+    
+    Returns:
+        Dictionary with AI response and relevant data
+    """
+    if not query or not query.strip():
+        return {
+            "ok": False,
+            "error": "Query cannot be empty"
+        }
+    
+    try:
+        # Import OpenAI client
+        import os
+        from openai import OpenAI
+        from dotenv import load_dotenv
+        
+        load_dotenv()
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            return {
+                "ok": False,
+                "error": "OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
+            }
+        
+        # Gather context from available data
+        matches = await get_live_matches()
+        match_stats = await get_match_stats()
+        
+        # Build context for AI
+        context_data = {
+            "total_matches": match_stats.get("total", 0) if isinstance(match_stats, dict) else 0,
+            "live_matches": match_stats.get("live", 0) if isinstance(match_stats, dict) else 0,
+            "upcoming_matches": match_stats.get("upcoming", 0) if isinstance(match_stats, dict) else 0,
+            "matches_list": matches if isinstance(matches, list) else []
+        }
+        
+        # Create context summary
+        context_text = f"""You are an esports assistant. Answer questions about esports matches, teams, and players.
+
+Current Data:
+- Total matches tracked: {context_data['total_matches']}
+- Live matches: {context_data['live_matches']}
+- Upcoming matches: {context_data['upcoming_matches']}
+
+Available matches:
+"""
+        
+        # Add match details to context
+        if isinstance(matches, list) and len(matches) > 0:
+            for i, match in enumerate(matches[:10]):  # Limit to 10 for context size
+                teams = match.get("teams", []) or match.get("opponents", [])
+                team_names = [t.get("name", "Unknown") for t in teams[:2]]
+                status = match.get("status", "Unknown")
+                game = match.get("game", "Unknown")
+                
+                context_text += f"\n{i+1}. {' vs '.join(team_names)} ({game}, Status: {status})"
+        
+        # Call OpenAI API
+        client = OpenAI(api_key=api_key)
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": context_text
+                },
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ],
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        return {
+            "ok": True,
+            "query": query,
+            "response": ai_response,
+            "context": {
+                "live_matches": context_data['live_matches'],
+                "total_matches": context_data['total_matches']
+            },
+            "timestamp": response.created
+        }
+        
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"AI chat error: {str(e)}"
+        }
+
+if FASTAPI_AVAILABLE:
+    # Register AI chat endpoint
+    app.get("/api/ai/chat")(ai_chat)  # pragma: no cover
+
 else:
     # Provide a placeholder `app` so tests that assert its existence pass.
     app = None

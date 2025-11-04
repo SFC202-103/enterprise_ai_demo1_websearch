@@ -1,267 +1,226 @@
-# 🚀 Enterprise AI Development
+# 🎮 Esports Live Match Tracker
 
-> **Learn professional software development by building a real AI application**
+[![Tests](https://img.shields.io/badge/tests-283%20passing-brightgreen)]()
+[![Coverage](https://img.shields.io/badge/coverage-96.91%25-brightgreen)]()
+[![Python](https://img.shields.io/badge/python-3.13+-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-[![Tests](https://img.shields.io/badge/tests-69%20passing-brightgreen)]()
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)]()
-[![TDD](https://img.shields.io/badge/methodology-TDD-orange)]()
+A comprehensive real-time esports match tracking platform that aggregates live match data from multiple sources across various competitive games. Built with FastAPI, this application provides a modern web interface and RESTful API for tracking matches, teams, players, and community sentiment across the esports ecosystem.
 
----
+## 🎯 Key Features
 
-## What You'll Learn in 2 Weeks
+### Real-Time Match Tracking
+- **Multi-Game Support**: Tracks matches across League of Legends, CS:GO, Dota 2, Apex Legends, and Marvel Rivals
+- **Live Updates**: Real-time match status, scores, and player statistics
+- **Comprehensive Coverage**: Upcoming, live, and finished matches from multiple data sources
 
-Build a creative AI application using **OpenAI's APIs** while mastering:
+### Data Aggregation
+- **8 Data Connectors**: Integrates with PandaScore, Riot Games API, OpenDota, HLTV, Battlefy, Apex Stats, Marvel Rivals API, and Liquipedia
+- **Smart Caching**: Efficient data caching to minimize API calls and improve performance
+- **Unified Interface**: Single API that normalizes data from multiple sources
 
-**Test-Driven Development** • **Clean Architecture** • **Enterprise Logging** • **Professional Git** • **CI/CD**
+### AI-Powered Analysis
+- **Sentiment Analysis**: AI-driven community sentiment analysis for matches and teams
+- **Natural Language Q&A**: Ask questions about games, players, and teams using natural language
+- **Context-Aware Responses**: AI assistant with real-time match context
 
-**The Twist:** This codebase is designed as a **living textbook**. Every file teaches you concepts through narrative comments and real examples.
+### Modern Web Interface
+- **Single-Page Application**: Fast, responsive web UI built with vanilla JavaScript
+- **Game Filters**: Easy filtering by game type (League of Legends, CS:GO, Dota 2, etc.)
+- **Search Functionality**: Quick search for specific teams, matches, or players
+- **Match Details**: Detailed match information with team rosters and statistics
 
----
+### Professional Architecture
+- **RESTful API**: Well-documented FastAPI backend with async support
+- **Test Coverage**: 96.91% test coverage with 283 passing tests
+- **Type Safety**: Full type hints and validation using Pydantic models
+- **Logging**: Comprehensive logging for debugging and monitoring
 
-## 🎯 Three Ways to Start
+## 🚀 Quick Start
 
-<table>
-<tr>
-<td width="33%" align="center">
-<h3>🏃‍♂️ Just Get It Running</h3>
-<p><strong>5-minute setup</strong></p>
-<a href="docs/GETTING_STARTED.md">Quick Start Guide →</a>
-<br><br>
-<em>Setup, run tests, see it work</em>
-</td>
-<td width="33%" align="center">
-<h3>📚 Teach Me Properly</h3>
-<p><strong>Full learning path</strong></p>
-<a href="docs/LEARNING_PATH.md">Learning Path Map →</a>
-<br><br>
-<em>Follow the guided journey</em>
-</td>
-<td width="33%" align="center">
-<h3>🎯 I Know What I'm Doing</h3>
-<p><strong>Jump to the code</strong></p>
-<a href="src/">Browse Source →</a>
-<br><br>
-<em>See patterns, apply them</em>
-</td>
-</tr>
-</table>
+### Prerequisites
+- Python 3.13 or higher
+- OpenAI API key (for AI features)
+- PandaScore API key (optional, for enhanced match data)
 
----
+### Installation
 
-## 📖 Your Learning Resources
-
-### 🎓 Course Materials
-- **[Learning Path Map](docs/LEARNING_PATH.md)** - Master roadmap
-- **[Getting Started](docs/GETTING_STARTED.md)** - Setup and first steps
-- **[Course Structure](docs/COURSE_STRUCTURE.md)** - 2-week session plan
-- **[Code as Textbook](docs/CODE_AS_TEXTBOOK.md)** - How to read this code
-- **[Student Guide](docs/STUDENT_GUIDE.md)** - Day-by-day checklist
-- **[Grading Rubric](docs/GRADING.md)** - What you'll be evaluated on
-
-### 🛠️ Development Guides
-- **[TDD Workflow](docs/TDD_WORKFLOW.md)** - Write tests first (15 min read)
-- **[AI Collaboration](docs/AI_COLLABORATION.md)** - Work with Claude (10 min read)
-- **[Git Workflow](docs/GIT_WORKFLOW.md)** - Professional commits (10 min read)
-- **[Logging Guide](docs/LOGGING.md)** - Enterprise logging (5 min read)
-- **[Labs (Guided Practice)](docs/LEARNING_PATH.md#2-narrative-reading-days-12)** - Hands-on exercises per chapter
-
-### 💡 Project Resources
-- **[Project Launch Kit](docs/PROJECT_LAUNCH_KIT.md)** - Scope and planning template
-- **[Project Ideas](docs/PROJECT_IDEAS.md)** - 60+ ideas with difficulty ratings
-- **[OpenAI APIs](docs/openai_tools_research_oct2025.md)** - Complete API reference (1,300 lines)
-- **[Demo Playbook](docs/DEMO_PLAYBOOK.md)** - Prepare your final presentation
-
-### 📚 Reference Library
-- **[Architecture Overview](docs/architecture.md)** - System diagrams and design decisions
-- **[OpenAI Web Search Notes](docs/web_search_openai.md)** - Tool behavior, payloads, and examples
-
----
-
-## 🏗️ What This Repository Demonstrates
-
-**A production-quality AI web search application** that shows you:
-
-```
-📂 Architecture                      What You'll Learn
-├── src/models.py                   → Dataclasses, type hints, exceptions
-├── src/client.py                   → API clients, error handling, secrets
-├── src/parser.py                   → Data transformation, defensive parsing
-├── src/search_service.py           → Service layer, validation, orchestration
-├── src/main.py                     → CLI design, user experience
-└── src/logging_config.py           → Enterprise logging, rotation
-
-📂 Tests (69 tests, 100% coverage)   How You'll Prove It Works
-├── tests/test_models.py            → Unit testing patterns
-├── tests/test_client.py            → Mocking external APIs
-├── tests/test_parser.py            → Data validation testing
-├── tests/test_search_service.py    → Integration testing
-└── tests/test_main.py              → System testing
-```
-
-**Key Feature:** Each source file pairs with a test file. This is Test-Driven Development.
-
----
-
-## 🎯 Your Mission (Choose One API or Combination)
-
-**Available Tools:**
-- Chat Completion (conversations)
-- Vision (image analysis)
-- DALL-E 3 (image generation)
-- Whisper (speech-to-text)
-- TTS (text-to-speech)
-- Embeddings (semantic search)
-- Assistants (persistent agents)
-- Sora 2 (video generation)
-- GPT-5 Pro (advanced reasoning)
-
-**Examples:**
-- 📸 Recipe from food photo (Vision + Chat)
-- 🎙️ Meeting transcriber (Whisper + Summarization)
-- 🎨 AI art studio (DALL-E 3 + Chat)
-- 📚 Document Q&A (Embeddings + Chat)
-- 🎬 Story to video (Chat + Sora 2)
-
-**[Browse 10 detailed project ideas →](docs/PROJECT_IDEAS.md)**
-
----
-
-## ⚡ Quick Start (5 Minutes)
-
-**Prerequisites:** Python 3.11 or higher ([Download](https://python.org))
-
+1. **Clone the repository**
 ```bash
-# Clone and setup
-git clone https://github.com/kaw393939/enterprise_ai_demo1_websearch.git
+git clone https://github.com/yourusername/enterprise_ai_demo1_websearch.git
 cd enterprise_ai_demo1_websearch
-python -m venv venv
-source venv/bin/activate  # Mac/Linux (Windows: venv\Scripts\activate)
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure API key
-cp .env.example .env
-# Edit .env and add: OPENAI_API_KEY=sk-your-key-here
-
-# Verify it works
-pytest
-python -m src.main "latest AI developments"
 ```
 
-✅ **Working?** Great! Next: **[Read Course Structure →](docs/COURSE_STRUCTURE.md)**
-
-❌ **Issues?** Check **[Getting Started Guide →](docs/GETTING_STARTED.md)**
-
----
-
-## 💡 What Makes This Course Unique
-
-### 1. **Code IS the Textbook**
-Every file has narrative comments explaining concepts, design decisions, and alternatives.
-
-**Traditional code:**
-```python
-@dataclass
-class SearchOptions:
-    model: str = "gpt-4o-mini"
-```
-
-**Our teaching code:**
-```python
-@dataclass
-class SearchOptions:
-    """
-    📚 CONCEPT: Dataclasses auto-generate __init__, __repr__, __eq__
-    
-    📝 DESIGN: We default to "gpt-4o-mini" (fastest, cheapest for learning)
-    
-    EXAMPLE:
-    >>> options = SearchOptions()  # Uses defaults
-    >>> options = SearchOptions(model="gpt-4o")  # Override for production
-    """
-    model: str = "gpt-4o-mini"
-```
-
-### 2. **TDD is Non-Negotiable**
-You'll write tests FIRST, then code. This is how professionals prevent bugs.
-
-### 3. **Production Standards**
-Not tutorial code—real patterns you'll use in your career.
-
-### 4. **AI as Learning Partner**
-Learn to use Claude effectively while maintaining quality and understanding.
-
----
-
-## 📊 Grading at a Glance
-
-| Category | Points | Key Requirements |
-|----------|--------|------------------|
-| **Works & Uses APIs** | 30 | No crashes, correct API usage |
-| **Tests & TDD** | 30 | 80%+ coverage, tests written first |
-| **Code Quality** | 25 | Clean architecture, logging, errors |
-| **Documentation & Demo** | 15 | Clear README, 5-min presentation |
-
-**[View full rubric →](docs/GRADING.md)**
-
----
-
-## 🆘 Getting Help
-
-**During class:** Ask instructor, pair with classmates, use Claude
-
-**Outside class:**
-1. Read the relevant guide in `docs/`
-2. Check example code in `src/` and `tests/`
-3. Search the [OpenAI API reference](docs/openai_tools_research_oct2025.md)
-4. Ask Claude with specific context (see [AI Collaboration guide](docs/AI_COLLABORATION.md))
-
-**Common issues:**
+2. **Install dependencies**
 ```bash
-pytest -v                                          # See test details
-source venv/bin/activate                           # Activate environment
-pytest --cov=src --cov-report=term-missing         # Check coverage
-git status && git log --oneline                    # Git status
+pip install -r requirements.txt
 ```
 
+3. **Configure environment variables**
+Create a `.env` file in the project root:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+PANDASCORE_API_KEY=your_pandascore_key_here  # Optional
+```
+
+4. **Run the application**
+```bash
+python -m uvicorn src.fastapi_app:app --reload --port 8000
+```
+
+5. **Open your browser**
+Navigate to `http://localhost:8000` to access the web interface.
+
+## 📡 API Endpoints
+
+### Match Endpoints
+- `GET /api/live_matches` - Get all live and upcoming matches
+  - Query params: `game` (filter by game), `status` (filter by match status), `provider` (filter by data source)
+- `GET /api/matches/{match_id}` - Get specific match details
+- `GET /api/match_stats` - Get match statistics (total, live, upcoming, finished counts)
+
+### Team & Player Endpoints
+- `GET /api/team_stats` - Get team statistics and performance data
+  - Query params: `team_name` (filter by team name)
+- `GET /api/player_stats` - Get player statistics and performance data
+  - Query params: `player_name` (filter by player name)
+
+### AI Endpoints
+- `GET /api/sentiment` - Get AI-powered sentiment analysis
+  - Query params: `match_id` (analyze specific match), `team_name` (analyze specific team)
+- `GET /api/ai/chat` - Natural language Q&A about esports
+  - Query params: `query` (your question)
+
+### Administrative Endpoints
+- `GET /api/games` - List all supported games
+- `GET /api/tournaments` - Get tournament information
+- `POST /api/admin/push_update` - Push match updates (requires admin token)
+- `POST /api/admin/sync` - Trigger data synchronization (requires admin token)
+
+## 🎮 Supported Games
+
+| Game | Connector | Features |
+|------|-----------|----------|
+| League of Legends | Riot API, PandaScore | Live matches, player stats, team data |
+| CS:GO | HLTV, PandaScore | Tournament matches, team rankings |
+| Dota 2 | OpenDota, PandaScore | Live matches, player profiles, match history |
+| Apex Legends | Apex Stats | Tournament brackets, player stats |
+| Marvel Rivals | Marvel API | Competitive matches, team rosters |
+
+## 🏗️ Architecture
+
+### Backend Stack
+- **FastAPI**: Modern, high-performance web framework
+- **Pydantic**: Data validation and settings management
+- **httpx**: Async HTTP client for API requests
+- **pytest**: Comprehensive test suite with 96.91% coverage
+
+### Data Layer
+- **Connector Pattern**: Modular connectors for each data source
+- **Response Caching**: Smart caching to reduce API load
+- **Data Normalization**: Unified data format across all sources
+
+### Frontend
+- **Vanilla JavaScript**: No framework dependencies for fast loading
+- **Responsive Design**: Works on desktop and mobile devices
+- **Modern UI**: Clean, intuitive interface with real-time updates
+
+## 🧪 Testing
+
+Run the full test suite:
+```bash
+pytest tests/ -v
+```
+
+Run with coverage report:
+```bash
+pytest tests/ --cov=src --cov-report=html
+```
+
+Run specific test categories:
+```bash
+pytest tests/test_fastapi*.py  # API tests
+pytest tests/test_connectors*.py  # Connector tests
+pytest tests/test_db*.py  # Database tests
+```
+
+## 📊 Project Statistics
+
+- **Total Tests**: 283 (100% passing)
+- **Code Coverage**: 96.91%
+- **Lines of Code**: 1,391 (excluding tests)
+- **API Endpoints**: 15+
+- **Data Connectors**: 8
+- **Supported Games**: 5+
+
+## 🛠️ Development
+
+### Project Structure
+```
+enterprise_ai_demo1_websearch/
+├── src/
+│   ├── fastapi_app.py          # Main FastAPI application (569 lines)
+│   ├── connectors/              # Data source connectors
+│   │   ├── pandascore_connector.py
+│   │   ├── riot_connector.py
+│   │   ├── hltv_connector.py
+│   │   └── ...
+│   ├── client.py               # OpenAI client integration
+│   ├── models.py               # Pydantic data models
+│   └── db.py                   # Database operations
+├── tests/                      # Comprehensive test suite
+├── web/
+│   └── index.html              # Frontend application
+└── docs/                       # Documentation
+```
+
+### Adding a New Game Connector
+
+1. Create a new connector in `src/connectors/`:
+```python
+from typing import List, Dict, Any
+
+class YourGameConnector:
+    async def get_matches(self, game: str = None) -> List[Dict[str, Any]]:
+        # Implement your data fetching logic
+        pass
+```
+
+2. Register the connector in `fastapi_app.py`:
+```python
+connectors.append(YourGameConnector())
+```
+
+3. Add tests in `tests/test_connectors*.py`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes with tests
+4. Ensure tests pass and coverage remains >96%
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **PandaScore** for comprehensive esports data API
+- **Riot Games** for League of Legends data
+- **OpenDota** for Dota 2 statistics
+- **HLTV** for CS:GO match data
+- **OpenAI** for AI-powered features
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub.
+
 ---
 
-## 🎓 Learning Outcomes
-
-After completing this course, you will confidently:
-
-✅ Build robust API clients with error handling  
-✅ Write comprehensive tests using TDD methodology  
-✅ Structure applications with clean architecture  
-✅ Implement enterprise-grade logging and monitoring  
-✅ Use professional git workflows and CI/CD  
-✅ Collaborate effectively with AI tools  
-✅ Present technical work clearly  
-
-**Most importantly:** You'll shift from writing "scripts that work" to building "systems that last."
-
----
-
-## 🚀 Ready to Start?
-
-### Option 1: Dive Right In
-**[Getting Started Guide →](docs/GETTING_STARTED.md)** - Get running in 5 minutes
-
-### Option 2: Learn the Concepts First
-**[Code as Textbook →](docs/CODE_AS_TEXTBOOK.md)** - Understand the philosophy
-
-### Option 3: See the Full Plan
-**[Course Structure →](docs/COURSE_STRUCTURE.md)** - 2-week breakdown
-
----
-
-<div align="center">
-
-**Questions?** Check the [Getting Started Guide](docs/GETTING_STARTED.md) or ask your instructor.
-
-*Built with ❤️ for students who want to understand, not just copy-paste*
-
-**Let's build something amazing! 🚀**
-
-</div>
+**Built with ❤️ for the esports community**

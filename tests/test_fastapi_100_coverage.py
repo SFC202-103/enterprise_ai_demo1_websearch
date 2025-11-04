@@ -159,8 +159,9 @@ def test_get_match_id_not_in_fixture():
     
     result = asyncio.run(fa.get_match("nonexistent_id"))
     
-    # Should return JSONResponse with 404
-    assert hasattr(result, "status_code")
+    # Should return dict with 'detail' key
+    assert isinstance(result, dict)
+    assert result.get("detail") == "not found"
     
     fa._fixture_data["matches"] = original
 

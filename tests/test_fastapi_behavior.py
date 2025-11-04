@@ -63,9 +63,9 @@ def test_get_match_returns_jsonresponse_when_no_fixture():
     mod.FASTAPI_AVAILABLE = True
 
     result = asyncio.run(mod.get_match('nope'))
-    # When fixture missing and FastAPI available, we return a JSONResponse-like object
-    assert isinstance(result, JSONResponse)
-    assert result.status_code == 404
+    # Now get_match always returns dict, never JSONResponse
+    assert isinstance(result, dict)
+    assert result.get("detail") == "not found"
 
 
 def test_get_matches_and_tournaments_with_fixture():
