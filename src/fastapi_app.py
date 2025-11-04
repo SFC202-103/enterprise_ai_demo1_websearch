@@ -109,21 +109,32 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
 
     Falls back to the local fixture data when connectors are not configured.
     """
-    # If no API keys are configured, use fixture data immediately for fast loading
+    # Check if we should use demo/fixture mode (no API keys configured)
     import os
-    has_api_keys = os.getenv("PANDASCORE_TOKEN") or os.getenv("RIOT_API_KEY")
+    use_demo_mode = os.getenv("USE_DEMO_MODE", "true").lower() == "true"
+    has_api_keys = (os.getenv("PANDASCORE_TOKEN") or 
+                   os.getenv("RIOT_API_KEY") or 
+                   os.getenv("HLTV_API_KEY") or
+                   os.getenv("BATTLEFY_API_KEY"))
     
-    if not has_api_keys:
-        # Fast path: return fixture data immediately
+    # If demo mode is enabled or no API keys are configured, use fixture data only
+    if use_demo_mode or not has_api_keys:
+        # Fast path: return fixture data immediately without calling any connectors
         matches = _fixture_data.get("matches", [])
         if game:
-            matches = [m for m in matches if m.get("video_game") == game or m.get("game") == game]
+            game_lower = game.lower()
+            matches = [m for m in matches if 
+                      game_lower in (m.get("video_game") or "").lower() or
+                      game_lower in (m.get("game") or "").lower() or
+                      game_lower in (m.get("videogame", {}).get("slug") or "").lower()]
         if status:
             s = status.lower()
             if s == "running" or s == "live":
                 matches = [m for m in matches if "running" in (m.get("status") or "").lower()]
             elif s in ("upcoming", "scheduled"):
                 matches = [m for m in matches if "upcoming" in (m.get("status") or "").lower()]
+            elif s == "finished":
+                matches = [m for m in matches if "finished" in (m.get("status") or "").lower()]
         return matches
     
     # Prefer explicit provider selection

@@ -622,8 +622,17 @@
             // Apply game filter
             if (currentFilter !== 'all') {
                 filtered = filtered.filter(match => {
-                    const game = (match.game || match.videogame?.name || '').toLowerCase();
-                    return game.includes(currentFilter);
+                    const game = (match.game || match.videogame?.name || match.video_game || '').toLowerCase();
+                    const slug = (match.videogame?.slug || '').toLowerCase();
+                    const filter = currentFilter.toLowerCase();
+                    
+                    // Check if game name or slug contains the filter
+                    return game.includes(filter) || slug.includes(filter) ||
+                           // Handle specific game mappings
+                           (filter === 'lol' && (game.includes('league') || slug.includes('lol'))) ||
+                           (filter === 'csgo' && (game.includes('cs:go') || game.includes('counter') || slug.includes('cs-go'))) ||
+                           (filter === 'dota2' && (game.includes('dota') || slug.includes('dota'))) ||
+                           (filter === 'rl' && (game.includes('rocket') || slug.includes('rl')));
                 });
             }
             
@@ -632,9 +641,15 @@
             if (searchTerm) {
                 filtered = filtered.filter(match => {
                     const teams = match.teams || match.opponents || [];
-                    const teamNames = teams.map(t => (t.name || '').toLowerCase()).join(' ');
+                    const teamNames = teams.map(t => {
+                        const team = t.opponent || t;
+                        return (team.name || team.acronym || '').toLowerCase();
+                    }).join(' ');
                     const tournament = (match.tournament?.name || match.league?.name || '').toLowerCase();
-                    return teamNames.includes(searchTerm) || tournament.includes(searchTerm);
+                    const title = (match.title || '').toLowerCase();
+                    return teamNames.includes(searchTerm) || 
+                           tournament.includes(searchTerm) ||
+                           title.includes(searchTerm);
                 });
             }
             
