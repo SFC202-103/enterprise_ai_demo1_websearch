@@ -629,13 +629,27 @@
         // Load matches from API
         async function loadMatches() {
             try {
+                console.log('Loading matches from /api/live_matches...');
                 const response = await fetch('/api/live_matches');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Received data:', data);
+                console.log('Is array?', Array.isArray(data));
+                console.log('Length:', data.length);
                 
                 if (Array.isArray(data)) {
                     allMatches = data;
+                    console.log('allMatches updated with', allMatches.length, 'matches');
                     filterMatches();
                     updateStats();
+                } else {
+                    console.error('Data is not an array:', data);
+                    showError('Invalid data format received from server.');
                 }
             } catch (error) {
                 console.error('Error loading matches:', error);
@@ -645,7 +659,13 @@
 
         // Filter matches based on selected game
         function filterMatches() {
-            document.getElementById('loadingState').style.display = 'none';
+            console.log('filterMatches called, currentFilter:', currentFilter);
+            console.log('allMatches length:', allMatches.length);
+            
+            const loadingState = document.getElementById('loadingState');
+            if (loadingState) {
+                loadingState.style.display = 'none';
+            }
             
             let filtered = allMatches;
             
@@ -670,8 +690,11 @@
                 });
             }
             
+            console.log('After game filter, filtered length:', filtered.length);
+            
             // Apply search filter
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
             if (searchTerm) {
                 filtered = filtered.filter(match => {
                     const teams = match.teams || match.opponents || [];
@@ -690,22 +713,51 @@
                 });
             }
             
+            console.log('After search filter, filtered length:', filtered.length);
             renderMatches(filtered);
         }
 
         // Render matches to grid
         function renderMatches(matches) {
+            console.log('renderMatches called with', matches.length, 'matches');
+            
             const grid = document.getElementById('matchesGrid');
             const emptyState = document.getElementById('emptyState');
             
-            if (matches.length === 0) {
-                grid.innerHTML = '';
-                emptyState.style.display = 'block';
+            if (!grid) {
+                console.error('matchesGrid element not found!');
                 return;
             }
             
-            emptyState.style.display = 'none';
-            grid.innerHTML = matches.map(match => createMatchCard(match)).join('');
+            if (!emptyState) {
+                console.error('emptyState element not found!');
+            }
+            
+            if (matches.length === 0) {
+                grid.innerHTML = '';
+                if (emptyState) emptyState.style.display = 'block';
+                console.log('No matches to display');
+                return;
+            }
+            
+            if (emptyState) emptyState.style.display = 'none';
+            
+            try {
+                const cardsHTML = matches.map((match, index) => {
+                    try {
+                        return createMatchCard(match);
+                    } catch (error) {
+                        console.error(`Error creating card for match ${index}:`, error, match);
+                        return '<div class="match-card"><p>Error loading match</p></div>';
+                    }
+                }).join('');
+                
+                grid.innerHTML = cardsHTML;
+                console.log('Successfully rendered', matches.length, 'match cards');
+            } catch (error) {
+                console.error('Error in renderMatches:', error);
+                grid.innerHTML = '<div style="color: red;">Error rendering matches</div>';
+            }
         }
 
         // Create match card HTML
@@ -773,6 +825,8 @@
 
         // Get game information
         function getGameInfo(match) {
+            if (!match) return { name: 'Esports', emoji: '🎮' };
+            
             const game = (match.game || match.videogame?.name || match.video_game || match.videogame?.slug || '').toLowerCase();
             
             const gameMap = {
@@ -794,11 +848,13 @@
             };
             
             // Direct match
-            if (gameMap[game]) return gameMap[game];
+            if (game && gameMap[game]) return gameMap[game];
             
             // Partial match
-            for (const [key, value] of Object.entries(gameMap)) {
-                if (game.includes(key) || key.includes(game)) return value;
+            if (game) {
+                for (const [key, value] of Object.entries(gameMap)) {
+                    if (game.includes(key) || key.includes(game)) return value;
+                }
             }
             
             // Default fallback - try to extract game name from match object

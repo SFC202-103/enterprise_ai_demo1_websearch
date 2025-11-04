@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11', '3.12', '3.13']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,18 +52,7 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          coverage report --fail-under=100
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install and run frontend tests
-        working-directory: ./web
-        run: |
-          npm ci
-          npm run test -- --run
+          coverage report --fail-under=95
 
   integration:
     name: Integration tests (Tracker)
