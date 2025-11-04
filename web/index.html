@@ -411,11 +411,41 @@
             background: var(--dark);
             border: 1px solid var(--border);
             border-radius: 12px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 90vh;
+            max-width: 900px;
+            width: 95%;
+            max-height: 95vh;
             overflow-y: auto;
             padding: 2rem;
+        }
+        
+        /* Chat Messages Scrollbar */
+        #chatMessages {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.1);
+        }
+        
+        #chatMessages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chatMessages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        #chatMessages::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 3px;
+        }
+        
+        #chatMessages::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+        
+        /* Pulse animation for typing */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .modal-header {
@@ -819,6 +849,9 @@
                 const sentiment = await sentimentResponse.json();
                 
                 modalBody.innerHTML = renderMatchDetails(match, sentiment);
+                
+                // Initialize AI chat for this match
+                setTimeout(() => initializeAiChat(matchId), 100);
             } catch (error) {
                 console.error('Error loading match details:', error);
                 modalBody.innerHTML = '<p>Error loading match details.</p>';
@@ -899,7 +932,7 @@
                     </div>
                 ` : ''}
                 
-                <div style="background: var(--dark); padding: 1.25rem; border-radius: 12px;">
+                <div style="background: var(--dark); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.25rem;">
                     <h4 style="margin: 0 0 1rem 0;">Match Information</h4>
                     <div style="display: grid; gap: 0.75rem;">
                         <div style="display: flex; justify-content: space-between;">
@@ -929,12 +962,291 @@
                         ` : ''}
                     </div>
                 </div>
+                
+                <!-- AI Chat Assistant -->
+                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%); 
+                            padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                    <h4 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🤖</span> AI Match Analysis
+                    </h4>
+                    
+                    <div id="chatMessages" style="background: var(--dark); border-radius: 8px; padding: 1rem; 
+                                                   max-height: 300px; overflow-y: auto; margin-bottom: 1rem;
+                                                   min-height: 200px;">
+                        <div class="ai-message" style="margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 0.5rem; align-items: start;">
+                                <span style="font-size: 1.5rem;">🤖</span>
+                                <div style="flex: 1;">
+                                    <div style="color: var(--primary); font-weight: 600; margin-bottom: 0.25rem;">AI Assistant</div>
+                                    <div style="color: var(--text-secondary); line-height: 1.5;" id="initialAiMessage">
+                                        Loading match analysis...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="chatInput" placeholder="Ask about player stats, predictions, or strategies..." 
+                               style="flex: 1; padding: 0.75rem; background: var(--dark); border: 1px solid rgba(255,255,255,0.1); 
+                                      border-radius: 8px; color: white; font-size: 0.875rem;"
+                               onkeypress="if(event.key === 'Enter') sendChatMessage('${match.id}')">
+                        <button onclick="sendChatMessage('${match.id}')" 
+                                style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); 
+                                       border: none; border-radius: 8px; color: white; font-weight: 600; 
+                                       cursor: pointer; transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='scale(1.05)'" 
+                                onmouseout="this.style.transform='scale(1)'">
+                            Send
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                        <button onclick="askPredefinedQuestion('${match.id}', 'player_stats')" 
+                                style="padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); 
+                                       border-radius: 6px; color: var(--primary); font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                            📊 Player Stats
+                        </button>
+                        <button onclick="askPredefinedQuestion('${match.id}', 'prediction')" 
+                                style="padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); 
+                                       border-radius: 6px; color: var(--primary); font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                            🎯 Win Prediction
+                        </button>
+                        <button onclick="askPredefinedQuestion('${match.id}', 'history')" 
+                                style="padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); 
+                                       border-radius: 6px; color: var(--primary); font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                            📜 Head-to-Head
+                        </button>
+                        <button onclick="askPredefinedQuestion('${match.id}', 'strategy')" 
+                                style="padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); 
+                                       border-radius: 6px; color: var(--primary); font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                            🎮 Key Strategies
+                        </button>
+                    </div>
+                </div>
             `;
         }
 
         // Close modal
         function closeModal() {
             document.getElementById('matchModal').classList.remove('active');
+        }
+        
+        // AI Chat Functions
+        let currentMatchData = null;
+        
+        // Initialize AI chat with match analysis
+        async function initializeAiChat(matchId) {
+            currentMatchData = allMatches.find(m => m.id === matchId);
+            if (!currentMatchData) return;
+            
+            const teams = currentMatchData.teams || currentMatchData.opponents || [];
+            const team1 = teams[0]?.opponent || teams[0] || { name: 'Team 1' };
+            const team2 = teams[1]?.opponent || teams[1] || { name: 'Team 2' };
+            
+            const initialMessage = `
+                <strong>Match Overview: ${team1.name} vs ${team2.name}</strong><br><br>
+                I'm your AI match analyst! I can provide:<br>
+                • Player statistics and performance metrics<br>
+                • Win probability predictions<br>
+                • Historical head-to-head analysis<br>
+                • Strategic insights and key matchups<br><br>
+                Click the quick action buttons or ask me anything!
+            `;
+            
+            document.getElementById('initialAiMessage').innerHTML = initialMessage;
+        }
+        
+        // Send chat message
+        async function sendChatMessage(matchId) {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate AI response (replace with actual API call)
+            setTimeout(() => {
+                removeTypingIndicator();
+                const response = generateAiResponse(matchId, message);
+                addChatMessage('ai', response);
+            }, 1500);
+        }
+        
+        // Ask predefined question
+        function askPredefinedQuestion(matchId, questionType) {
+            const questions = {
+                player_stats: 'Show me the player statistics for this match',
+                prediction: 'What is your prediction for this match?',
+                history: 'What is the head-to-head history between these teams?',
+                strategy: 'What are the key strategies and matchups to watch?'
+            };
+            
+            const question = questions[questionType];
+            document.getElementById('chatInput').value = question;
+            sendChatMessage(matchId);
+        }
+        
+        // Add message to chat
+        function addChatMessage(type, content) {
+            const chatMessages = document.getElementById('chatMessages');
+            const isUser = type === 'user';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.marginBottom = '1rem';
+            messageDiv.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; align-items: start; ${isUser ? 'flex-direction: row-reverse;' : ''}">
+                    <span style="font-size: 1.5rem;">${isUser ? '👤' : '🤖'}</span>
+                    <div style="flex: 1; ${isUser ? 'text-align: right;' : ''}">
+                        <div style="color: ${isUser ? 'var(--text-secondary)' : 'var(--primary)'}; font-weight: 600; margin-bottom: 0.25rem;">
+                            ${isUser ? 'You' : 'AI Assistant'}
+                        </div>
+                        <div style="color: var(--text-secondary); line-height: 1.5; 
+                                    background: ${isUser ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)'}; 
+                                    padding: 0.75rem; border-radius: 8px; display: inline-block; max-width: 85%;">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.style.marginBottom = '1rem';
+            typingDiv.innerHTML = `
+                <div style="display: flex; gap: 0.5rem; align-items: start;">
+                    <span style="font-size: 1.5rem;">🤖</span>
+                    <div style="flex: 1;">
+                        <div style="color: var(--primary); font-weight: 600; margin-bottom: 0.25rem;">AI Assistant</div>
+                        <div style="color: var(--text-muted); line-height: 1.5;">
+                            <span style="animation: pulse 1.5s ease-in-out infinite;">Analyzing</span>...
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Remove typing indicator
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+        
+        // Generate AI response (mock implementation)
+        function generateAiResponse(matchId, question) {
+            const match = allMatches.find(m => m.id === matchId);
+            if (!match) return 'Unable to find match data.';
+            
+            const teams = match.teams || match.opponents || [];
+            const team1 = teams[0]?.opponent || teams[0] || { name: 'Team 1' };
+            const team2 = teams[1]?.opponent || teams[1] || { name: 'Team 2' };
+            const game = getGameInfo(match);
+            
+            const questionLower = question.toLowerCase();
+            
+            // Player Stats Response
+            if (questionLower.includes('player') || questionLower.includes('stat')) {
+                const score1 = teams[0]?.score || 0;
+                const score2 = teams[1]?.score || 0;
+                
+                return `
+                    <strong>📊 Player Statistics</strong><br><br>
+                    <strong>${team1.name}:</strong><br>
+                    • Current Score: ${score1}<br>
+                    • Avg KDA: 3.2 | Win Rate: 67%<br>
+                    • Star Player: MVP with 18.4 avg points<br><br>
+                    <strong>${team2.name}:</strong><br>
+                    • Current Score: ${score2}<br>
+                    • Avg KDA: 2.8 | Win Rate: 58%<br>
+                    • Star Player: Ace with 16.2 avg points<br><br>
+                    ${team1.name} currently has the statistical advantage with higher KDA and consistency.
+                `;
+            }
+            
+            // Prediction Response
+            if (questionLower.includes('predict') || questionLower.includes('win') || questionLower.includes('who will')) {
+                const score1 = teams[0]?.score || 0;
+                const score2 = teams[1]?.score || 0;
+                const leader = score1 > score2 ? team1.name : team2.name;
+                const winProb = score1 > score2 ? 65 : 58;
+                const closeMatch = Math.abs(score1 - score2) <= 1;
+                
+                return `
+                    <strong>🎯 Win Prediction</strong><br><br>
+                    Based on current performance, statistics, and momentum:<br><br>
+                    <strong>${leader}</strong>: ${winProb}% win probability<br>
+                    ${closeMatch ? '⚠️ This is an extremely close match!' : ''}<br><br>
+                    <strong>Key Factors:</strong><br>
+                    • Recent form and consistency<br>
+                    • Head-to-head advantage<br>
+                    • Current score momentum<br>
+                    • Player performance metrics<br><br>
+                    ${closeMatch ? 'Expect a nail-biting finish! Either team can take this.' : 
+                                   `${leader} has a strong advantage but ${score1 > score2 ? team2.name : team1.name} can still come back!`}
+                `;
+            }
+            
+            // Head-to-Head Response
+            if (questionLower.includes('history') || questionLower.includes('head-to-head') || questionLower.includes('h2h')) {
+                return `
+                    <strong>📜 Head-to-Head History</strong><br><br>
+                    <strong>Overall Record:</strong><br>
+                    ${team1.name}: 12 wins | ${team2.name}: 8 wins<br><br>
+                    <strong>Recent Matches (Last 5):</strong><br>
+                    🟢 ${team1.name} won 2-1 (Last Month)<br>
+                    🔴 ${team2.name} won 2-0 (2 Months Ago)<br>
+                    🟢 ${team1.name} won 2-1 (3 Months Ago)<br>
+                    🟢 ${team1.name} won 2-0 (4 Months Ago)<br>
+                    🔴 ${team2.name} won 2-1 (5 Months Ago)<br><br>
+                    ${team1.name} has the historical advantage, winning 60% of matches.<br>
+                    Most matches between these teams are highly competitive!
+                `;
+            }
+            
+            // Strategy Response
+            if (questionLower.includes('strateg') || questionLower.includes('matchup') || questionLower.includes('key')) {
+                return `
+                    <strong>🎮 Key Strategies & Matchups</strong><br><br>
+                    <strong>${team1.name} Strategy:</strong><br>
+                    • Aggressive early game control<br>
+                    • Focus on objective domination<br>
+                    • Leverage star player's mechanical skill<br><br>
+                    <strong>${team2.name} Strategy:</strong><br>
+                    • Patient scaling approach<br>
+                    • Team fight coordination<br>
+                    • Late-game power spike advantage<br><br>
+                    <strong>Critical Matchups:</strong><br>
+                    🔥 Star player vs Star player - Battle of mechanics<br>
+                    ⚡ Mid-game objective control will be decisive<br>
+                    🎯 Team composition synergy favors ${team1.name}<br><br>
+                    Watch for ${team2.name}'s comeback potential in late game!
+                `;
+            }
+            
+            // Default Response
+            return `
+                I can help you analyze this ${game.name} match between <strong>${team1.name}</strong> and <strong>${team2.name}</strong>!<br><br>
+                Try asking about:<br>
+                • "Show player statistics"<br>
+                • "Who will win this match?"<br>
+                • "What's their head-to-head history?"<br>
+                • "What are the key strategies?"<br><br>
+                Or click the quick action buttons below the chat!
+            `;
         }
 
         // Close modal on outside click
