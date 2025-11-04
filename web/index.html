@@ -659,15 +659,16 @@
         // Create match card HTML
         function createMatchCard(match) {
             const teams = match.teams || match.opponents || [];
-            const team1 = teams[0] || { name: 'TBD', acronym: 'TBD' };
-            const team2 = teams[1] || { name: 'TBD', acronym: 'TBD' };
+            const team1 = teams[0]?.opponent || teams[0] || { name: 'TBD', acronym: 'TBD' };
+            const team2 = teams[1]?.opponent || teams[1] || { name: 'TBD', acronym: 'TBD' };
             
             const status = getMatchStatus(match);
             const statusClass = status.toLowerCase().replace(' ', '-');
             const game = getGameInfo(match);
             
-            const score1 = match.results?.[0]?.score || match.games?.[0]?.teams?.[0]?.score || 0;
-            const score2 = match.results?.[1]?.score || match.games?.[0]?.teams?.[1]?.score || 0;
+            // Extract scores from various data structures
+            const score1 = teams[0]?.score ?? match.results?.[0]?.score ?? match.games?.[0]?.teams?.[0]?.score ?? 0;
+            const score2 = teams[1]?.score ?? match.results?.[1]?.score ?? match.games?.[0]?.teams?.[1]?.score ?? 0;
             
             const time = getMatchTime(match);
             
@@ -685,7 +686,7 @@
                         <div class="team">
                             <div class="team-info">
                                 <div class="team-logo">${team1.acronym?.[0] || team1.name?.[0] || '?'}</div>
-                                <div class="team-name">${team1.name || 'Unknown'}</div>
+                                <div class="team-name">${team1.name || team1.acronym || 'Unknown'}</div>
                             </div>
                             <div class="team-score">${score1}</div>
                         </div>
@@ -693,7 +694,7 @@
                         <div class="team">
                             <div class="team-info">
                                 <div class="team-logo">${team2.acronym?.[0] || team2.name?.[0] || '?'}</div>
-                                <div class="team-name">${team2.name || 'Unknown'}</div>
+                                <div class="team-name">${team2.name || team2.acronym || 'Unknown'}</div>
                             </div>
                             <div class="team-score">${score2}</div>
                         </div>
@@ -812,8 +813,8 @@
         // Render match details
         function renderMatchDetails(match, sentiment) {
             const teams = match.teams || match.opponents || [];
-            const team1 = teams[0] || { name: 'TBD' };
-            const team2 = teams[1] || { name: 'TBD' };
+            const team1 = teams[0]?.opponent || teams[0] || { name: 'TBD' };
+            const team2 = teams[1]?.opponent || teams[1] || { name: 'TBD' };
             
             return `
                 <div style="margin-bottom: 1.5rem;">
