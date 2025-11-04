@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esports Live Tracker</title>
+    <title>Esports Live Tracker - Real-Time Match Data</title>
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --light: #f1f5f9;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #475569;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,2183 +28,853 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 2rem;
         }
 
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .search-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-        }
-
-        .search-header {
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 1rem;
         }
 
-        .search-box {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .game-filters {
+        .logo {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
         }
 
-        .game-btn {
-            padding: 12px 24px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .game-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        /* Search and Filters */
+        .controls {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 12px;
+            border: 1px solid var(--border);
         }
 
-        .game-btn.active {
-            background: #667eea;
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
         }
 
-        .status-filters {
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--dark);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dark-light);
+        }
+
+        .filters {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 0.75rem;
             flex-wrap: wrap;
         }
 
-        .status-btn {
-            padding: 10px 20px;
-            border: 2px solid #10b981;
-            background: white;
-            color: #10b981;
+        .filter-chip {
+            padding: 0.5rem 1rem;
+            background: var(--dark);
+            border: 1px solid var(--border);
             border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
             transition: all 0.3s;
+            font-size: 0.875rem;
         }
 
-        .status-btn.active {
-            background: #10b981;
+        .filter-chip:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
             color: white;
         }
 
-        .status-btn.upcoming {
-            border-color: #f59e0b;
-            color: #f59e0b;
-        }
-
-        .status-btn.upcoming.active {
-            background: #f59e0b;
-        }
-
-        .status-btn.finished {
-            border-color: #6b7280;
-            color: #6b7280;
-        }
-
-        .status-btn.finished.active {
-            background: #6b7280;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            font-size: 18px;
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        /* Matches Grid */
         .matches-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
         }
 
         .match-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
             transition: all 0.3s;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
         }
 
         .match-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
         }
 
-        .match-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
         }
 
-        .match-card.live::before {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-            animation: pulse 2s ease-in-out infinite;
+        .match-game {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .game-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .match-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-live {
+            background: var(--danger);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-upcoming {
+            background: var(--warning);
+            color: white;
+        }
+
+        .status-finished {
+            background: var(--success);
+            color: white;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .match-status {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .match-status.live {
-            background: #ef4444;
-            color: white;
-            animation: blink 1.5s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
 
-        .match-status.upcoming {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .match-status.finished {
-            background: #6b7280;
-            color: white;
-        }
-
-        .match-status.not_started {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .match-game {
-            font-size: 16px;
-            color: white;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 12px;
-            padding: 10px 16px;
-            border-radius: 10px;
-            display: inline-block;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .match-game.game-lol {
-            background: linear-gradient(135deg, #0397ab 0%, #0a7eba 100%);
-        }
-
-        .match-game.game-csgo {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-
-        .match-game.game-dota {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-
-        .match-game.game-valorant {
-            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-        }
-
-        .match-game.game-overwatch {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        }
-
-        .match-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-
         .match-teams {
-            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
         }
 
         .team {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f3f4f6;
+            padding: 0.75rem;
+            background: var(--dark);
+            border-radius: 8px;
         }
 
-        .team:last-child {
-            border-bottom: none;
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .team-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--dark-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
         }
 
         .team-name {
             font-weight: 600;
-            color: #374151;
         }
 
         .team-score {
+            font-size: 1.5rem;
             font-weight: 700;
-            font-size: 18px;
-            color: #667eea;
+            color: var(--primary);
+        }
+
+        .match-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
         }
 
         .match-time {
-            font-size: 13px;
-            color: #6b7280;
-            margin-top: 10px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .match-actions {
             display: flex;
-            align-items: center;
-            gap: 5px;
+            gap: 0.5rem;
         }
 
-        .match-time::before {
-            content: '🕐';
-        }
-
-        .no-matches {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 15px;
-            color: #6b7280;
-        }
-
-        .no-matches h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .refresh-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
+        .action-btn {
+            padding: 0.5rem;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
-        .refresh-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        .action-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
         }
 
-        .stats {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 15px;
-            flex: 1;
-            min-width: 150px;
+        /* Loading State */
+        .loading {
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 3rem;
         }
 
-        .stat-value {
-            font-size: 28px;
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #667eea;
         }
 
-        .stat-label {
-            font-size: 12px;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 5px;
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
         }
 
+        .close-btn:hover {
+            color: var(--text);
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-
             .matches-grid {
                 grid-template-columns: 1fr;
             }
 
-            .game-filters {
+            .header-content {
+                flex-direction: column;
+            }
+
+            .header-stats {
                 width: 100%;
+                justify-content: space-around;
             }
 
-            .game-btn {
-                flex: 1;
-                min-width: 120px;
+            .search-bar {
+                flex-direction: column;
             }
         }
 
-        /* Sentiment and details section styles */
-        .sentiment-section {
-            margin-top: 25px;
-        }
-
-        .sentiment-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sentiment-loading {
-            text-align: center;
-            padding: 30px;
-            color: #6b7280;
-        }
-
-        .sentiment-card {
-            background: #f9fafb;
+        /* Sentiment Badge */
+        .sentiment-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-
-        .sentiment-label {
-            font-size: 14px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .sentiment-value {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
         }
 
         .sentiment-positive {
-            color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
         }
 
         .sentiment-negative {
-            color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
         }
 
         .sentiment-neutral {
-            color: #f59e0b;
-        }
-
-        .sentiment-bar {
-            width: 100%;
-            height: 10px;
-            background: #e5e7eb;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .sentiment-bar-fill {
-            height: 100%;
-            transition: width 0.5s ease;
-        }
-
-        .sentiment-bar-positive {
-            background: #10b981;
-        }
-
-        .sentiment-bar-negative {
-            background: #ef4444;
-        }
-
-        .sentiment-bar-neutral {
-            background: #f59e0b;
-        }
-
-        .sentiment-description {
-            font-size: 14px;
-            color: #6b7280;
-            line-height: 1.6;
-        }
-
-        .match-details {
-            margin-bottom: 20px;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: #6b7280;
-        }
-
-        .detail-value {
-            color: #1f2937;
-            font-weight: 500;
-        }
-
-        .highlights-section {
-            margin-top: 25px;
-        }
-
-        .highlights-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .highlight-card {
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .highlight-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-        }
-
-        .highlight-thumbnail {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .highlight-title {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .highlight-meta {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .match-result {
-            background: #f9fafb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-
-        .result-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 15px;
-        }
-
-        .result-teams {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .result-team {
-            flex: 1;
-            text-align: center;
-        }
-
-        .result-team.winner {
-            color: #10b981;
-        }
-
-        .result-team.loser {
-            color: #6b7280;
-        }
-
-        .result-team-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .result-team-score {
-            font-size: 32px;
-            font-weight: 800;
-        }
-
-        .result-vs {
-            font-size: 16px;
-            font-weight: 600;
-            color: #6b7280;
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎮 Esports Live Tracker</h1>
-            <p class="subtitle">Real-time matches across all major esports</p>
-        </header>
-
-        <div class="search-section">
-            <div class="search-header">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="🔍 Search for teams, matches, or tournaments...">
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <select id="dataSource" style="padding: 12px 20px; border: 2px solid #667eea; border-radius: 10px; font-size: 14px; font-weight: 600; background: white; color: #667eea; cursor: pointer;">
-                        <option value="">All Sources (Aggregated)</option>
-                        <option value="hltv">HLTV.org (CS:GO)</option>
-                        <option value="riot_esports">Riot Esports (LoL)</option>
-                        <option value="opendota">OpenDota (Dota 2)</option>
-                        <option value="apex">Apex Tracker (Apex Legends)</option>
-                        <option value="marvel">Marvel Esports (Marvel Rivals)</option>
-                        <option value="battlefy">Battlefy (Tournaments)</option>
-                        <option value="liquipedia">Liquipedia (Esports)</option>
-                        <option value="pandascore">PandaScore (Multi-game)</option>
-                        <option value="mediawiki">MediaWiki.org (Generic)</option>
-                    </select>
-                    <button class="refresh-btn" onclick="loadMatches()">↻ Refresh</button>
-                </div>
-            </div>
-
-            <div class="game-filters">
-                <button class="game-btn active" data-game="all">All Games</button>
-                <button class="game-btn" data-game="lol">League of Legends</button>
-                <button class="game-btn" data-game="csgo">CS:GO</button>
-                <button class="game-btn" data-game="dota2">Dota 2</button>
-                <button class="game-btn" data-game="valorant">Valorant</button>
-                <button class="game-btn" data-game="apex">Apex Legends</button>
-                <button class="game-btn" data-game="marvel">Marvel Rivals</button>
-                <button class="game-btn" data-game="overwatch">Overwatch</button>
-            </div>
-
-            <div class="status-filters">
-                <button class="status-btn active" data-status="all">All Status</button>
-                <button class="status-btn" data-status="live">🔴 Live</button>
-                <button class="status-btn upcoming" data-status="upcoming">🟡 Upcoming</button>
-                <button class="status-btn finished" data-status="finished">⚪ Finished</button>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="totalMatches">-</div>
-                <div class="stat-label">Total Matches</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="liveMatches">-</div>
-                <div class="stat-label">Live Now</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="upcomingMatches">-</div>
-                <div class="stat-label">Upcoming</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="finishedMatches">-</div>
-                <div class="stat-label">Past Games</div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div style="text-align: center; margin: 20px 0;">
-            <button onclick="showPlayerStats()" style="padding: 15px 30px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
-                🎮 View Top Player Statistics
-            </button>
-        </div>
-
-        <!-- Combined Match Details & Team Statistics Section -->
-        <div id="teamStatsSection" class="search-section" style="margin-top: 20px; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #667eea;">📊 Match Analysis</h2>
-                <button onclick="hideMatchDetails()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
-            </div>
-            
-            <!-- Match Info Card -->
-            <div id="selectedMatchInfo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 id="selectedMatchTitle" style="margin: 0 0 15px 0; font-size: 1.5em;">Match Details</h3>
-                <p id="selectedMatchTeams" style="margin: 0 0 15px 0; font-size: 1.2em;"></p>
-                
-                <!-- Match Stats Row -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.8;">Status</div>
-                        <div id="matchStatus" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.8;">Game</div>
-                        <div id="matchGame" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.8;">Provider</div>
-                        <div id="matchProvider" style="font-size: 1.3em; font-weight: bold; margin-top: 5px;">-</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🎮</div>
+                    <div class="logo-text">
+                        <h1>Esports Live Tracker</h1>
+                        <p>Real-time match data from PandaScore & More</p>
                     </div>
                 </div>
-                
-                <!-- Streaming Links -->
-                <div id="streamingLinks" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
-                    <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 10px;">📺 Where to Watch</div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a href="#" id="twitchLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #9146ff; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                            Twitch
-                        </a>
-                        <a href="#" id="youtubeLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #ff0000; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                            YouTube
-                        </a>
-                        <a href="#" id="officialLink" target="_blank" style="display: inline-block; padding: 8px 16px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                            Official Stream
-                        </a>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="liveCount">0</div>
+                        <div class="stat-label">Live Now</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="upcomingCount">0</div>
+                        <div class="stat-label">Upcoming</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Total</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Team Statistics Cards -->
-            <h3 style="color: #667eea; margin-bottom: 15px;">Team Statistics</h3>
-            <div id="teamStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                <div class="stat-card">
-                    <div class="stat-label">Loading team stats...</div>
-                </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Search and Filters -->
+        <div class="controls">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search teams, players, tournaments...">
+                <button class="btn btn-primary" onclick="searchMatches()">
+                    🔍 Search
+                </button>
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    🔄 Refresh
+                </button>
             </div>
-            
-            <!-- Player Links Section -->
-            <div style="background: linear-gradient(135deg, #10b98120 0%, #05966920 100%); padding: 20px; border-radius: 10px;">
-                <h3 style="color: #10b981; margin: 0 0 15px 0;">🎮 Player Information</h3>
-                <div id="playerLinksContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                    <div style="text-align: center; padding: 10px;">Loading player links...</div>
-                </div>
+            <div class="filters">
+                <div class="filter-chip active" data-filter="all">All Games</div>
+                <div class="filter-chip" data-filter="lol">League of Legends</div>
+                <div class="filter-chip" data-filter="csgo">CS:GO</div>
+                <div class="filter-chip" data-filter="dota2">Dota 2</div>
+                <div class="filter-chip" data-filter="valorant">Valorant</div>
+                <div class="filter-chip" data-filter="fifa">FIFA</div>
+                <div class="filter-chip" data-filter="rl">Rocket League</div>
             </div>
         </div>
 
-        <!-- Player Statistics Section - Hidden by default, shown on request -->
-        <div id="playerStatsSection" class="search-section" style="margin-top: 20px; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #667eea;">🎮 Player Statistics</h2>
-                <button onclick="hidePlayerStats()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
-            </div>
-            <div id="playerStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                <div class="stat-card">
-                    <div class="stat-label">Loading player stats...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sentiment Analysis Section - Hidden by default, shown on match click -->
-        <div id="sentimentSection" class="search-section" style="margin-top: 20px; display: none;">
-            <h2 style="margin-bottom: 20px; color: #667eea;">💬 Match Sentiment Analysis</h2>
-            <div id="sentimentContainer" style="background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); padding: 30px; border-radius: 15px;">
-                <div class="stat-label">Loading sentiment analysis...</div>
-            </div>
-        </div>
-
-        <div id="loadingIndicator" class="loading" style="display: none;">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
             <div class="spinner"></div>
-            <p>Loading matches...</p>
+            <p>Loading live matches...</p>
         </div>
 
-        <div id="matchesContainer" class="matches-grid"></div>
-    </div>
+        <!-- Matches Grid -->
+        <div class="matches-grid" id="matchesGrid"></div>
 
-    <!-- Inline Match Details Section (shown when a match is clicked) -->
-    <div id="inlineMatchDetails" style="display: none; margin-top: 40px;">
-        <div class="search-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 id="inlineModalTitle" style="margin: 0; color: #667eea;">📋 Selected Match Details</h2>
-                <button onclick="closeInlineDetails()" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">✕ Close</button>
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">🏆</div>
+            <h2>No matches found</h2>
+            <p class="empty-text">Try adjusting your filters or check back later for upcoming matches.</p>
+        </div>
+    </main>
+
+    <!-- Match Detail Modal -->
+    <div class="modal" id="matchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Match Details</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
             </div>
-            
-            <!-- Match Details Card -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
-                <div class="match-details" id="inlineModalDetails"></div>
-            </div>
-            
-            <!-- Highlights Section -->
-            <div class="highlights-section" id="inlineHighlightsSection" style="display: none; margin-bottom: 30px;">
-                <div class="sentiment-title" style="color: #667eea; font-size: 1.3em; font-weight: 600; margin-bottom: 15px;">
-                    <span>🎬</span>
-                    <span>Highlights & Clips</span>
-                </div>
-                <div id="inlineHighlightsContent"></div>
-            </div>
-            
-            <!-- Sentiment Section -->
-            <div class="sentiment-section" style="margin-bottom: 30px;">
-                <div class="sentiment-title" style="color: #667eea; font-size: 1.3em; font-weight: 600; margin-bottom: 15px;">
-                    <span>💬</span>
-                    <span>General Sentiment Analysis</span>
-                </div>
-                <div id="inlineSentimentContent"></div>
+            <div id="modalBody">
+                <!-- Match details will be inserted here -->
             </div>
         </div>
     </div>
 
     <script>
+        let currentFilter = 'all';
         let allMatches = [];
-        let currentGame = 'all';
-        let currentStatus = 'all';
-        let searchQuery = '';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
             loadMatches();
-            setupEventListeners();
-            
-            // Auto-refresh every 2 minutes (120 seconds) - only matches
-            setInterval(() => {
-                console.log('Auto-refreshing matches...');
-                loadMatches();
-            }, 120000); // 2 minutes
-            
-            // Also refresh when data source changes
-            document.getElementById('dataSource').addEventListener('change', () => {
-                loadMatches();
-            });
-            
-            // Stats are loaded on-demand only (when user clicks)
+            // Auto-refresh every 30 seconds
+            setInterval(loadMatches, 30000);
         });
 
-        function setupEventListeners() {
-            // Game filter buttons
-            document.querySelectorAll('.game-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentGame = e.target.dataset.game;
+        // Setup filter chips
+        function setupFilters() {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentFilter = chip.dataset.filter;
                     filterMatches();
                 });
-            });
-
-            // Status filter buttons
-            document.querySelectorAll('.status-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentStatus = e.target.dataset.status;
-                    filterMatches();
-                });
-            });
-
-            // Search input
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                searchQuery = e.target.value.toLowerCase();
-                filterMatches();
             });
         }
 
+        // Load matches from API
         async function loadMatches() {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block';
-
             try {
-                // Get selected data source
-                const dataSource = document.getElementById('dataSource').value;
-                const url = dataSource ? `/api/live_matches?provider=${dataSource}` : '/api/live_matches';
-                
-                console.log('Fetching from:', url);
-                const response = await fetch(url);
+                const response = await fetch('/api/live_matches');
                 const data = await response.json();
                 
-                console.log('API Response:', data);
-                console.log('Is array?', Array.isArray(data));
-                console.log('Data length:', data?.length);
-                
-                if (data && data.length > 0) {
-                    console.log('First match sample:', data[0]);
+                if (Array.isArray(data)) {
+                    allMatches = data;
+                    filterMatches();
+                    updateStats();
                 }
-                
-                allMatches = Array.isArray(data) ? data : [];
-                filterMatches();
-                updateStats();
             } catch (error) {
                 console.error('Error loading matches:', error);
-                document.getElementById('matchesContainer').innerHTML = `
-                    <div class="no-matches">
-                        <h2>❌ Error Loading Matches</h2>
-                        <p>${error.message}</p>
-                        <button class="refresh-btn" onclick="loadMatches()" style="margin-top: 20px;">Try Again</button>
-                    </div>
-                `;
-            } finally {
-                loadingIndicator.style.display = 'none';
+                showError('Failed to load matches. Please try again.');
             }
         }
 
+        // Filter matches based on selected game
         function filterMatches() {
+            document.getElementById('loadingState').style.display = 'none';
+            
             let filtered = allMatches;
-
-            console.log('Total matches before filtering:', filtered.length);
             
-            // First, filter to only include our supported games
-            filtered = filtered.filter(match => {
-                const game = String(match.video_game || match.game || '').toLowerCase();
-                // Match against supported esports games
-                const supportedGames = [
-                    'league', 'lol',           // League of Legends
-                    'counter-strike', 'csgo', 'cs:go', 'cs',  // Counter-Strike
-                    'dota',                     // Dota 2
-                    'valorant',                 // Valorant
-                    'apex', 'legends',          // Apex Legends
-                    'marvel', 'rivals',         // Marvel Rivals
-                    'overwatch'                 // Overwatch
-                ];
-                const isSupported = supportedGames.some(g => game.includes(g));
-                if (!isSupported && game) {
-                    console.log('Filtering out unsupported game:', game, '(original:', match.video_game || match.game, ')');
-                }
-                return isSupported;
-            });
-
-            console.log('Matches after game support filter:', filtered.length);
-
-            console.log('Matches after game support filter:', filtered.length);
-
-            // Filter by specific game if selected
-            if (currentGame !== 'all') {
+            // Apply game filter
+            if (currentFilter !== 'all') {
                 filtered = filtered.filter(match => {
-                    const game = String(match.video_game || match.game || '').toLowerCase();
-                    let matches = false;
-                    
-                    if (currentGame === 'lol') {
-                        matches = game.includes('league') || game.includes('lol');
-                    } else if (currentGame === 'csgo') {
-                        matches = game.includes('cs') || game.includes('counter');
-                    } else if (currentGame === 'dota2') {
-                        matches = game.includes('dota');
-                    } else if (currentGame === 'valorant') {
-                        matches = game.includes('valorant');
-                    } else if (currentGame === 'overwatch') {
-                        matches = game.includes('overwatch');
-                    } else {
-                        // Fallback for custom filters
-                        matches = game.includes(currentGame) || 
-                                 game.includes(currentGame.replace('_', ' ')) ||
-                                 game.includes(currentGame.replace('_', '-'));
-                    }
-                    
-                    console.log(`Checking game "${game}" against filter "${currentGame}": ${matches}`);
-                    return matches;
-                });
-                console.log('Matches after game-specific filter:', filtered.length);
-            }
-
-            // Filter by status
-            if (currentStatus !== 'all') {
-                filtered = filtered.filter(match => {
-                    const status = getMatchStatus(match);
-                    return status === currentStatus;
+                    const game = (match.game || match.videogame?.name || '').toLowerCase();
+                    return game.includes(currentFilter);
                 });
             }
-
-            // Filter by search query
-            if (searchQuery) {
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
                 filtered = filtered.filter(match => {
-                    const searchText = JSON.stringify(match).toLowerCase();
-                    return searchText.includes(searchQuery);
+                    const teams = match.teams || match.opponents || [];
+                    const teamNames = teams.map(t => (t.name || '').toLowerCase()).join(' ');
+                    const tournament = (match.tournament?.name || match.league?.name || '').toLowerCase();
+                    return teamNames.includes(searchTerm) || tournament.includes(searchTerm);
                 });
             }
-
-            displayMatches(filtered);
+            
+            renderMatches(filtered);
         }
 
-        function getMatchStatus(match) {
-            const status = String(match.status || '').toLowerCase();
+        // Render matches to grid
+        function renderMatches(matches) {
+            const grid = document.getElementById('matchesGrid');
+            const emptyState = document.getElementById('emptyState');
             
-            // Check for live status
-            if (match.live === true || 
-                status === 'running' || 
-                status === 'live' || 
-                status === 'in_progress' ||
-                status.includes('running') ||
-                status.includes('live')) {
-                return 'live';
-            }
-            
-            // Check for finished status
-            if (status === 'finished' || 
-                status === 'complete' || 
-                status === 'completed' ||
-                status === 'ended' || 
-                status === 'final' ||
-                status.includes('finished') ||
-                status.includes('ended')) {
-                return 'finished';
-            }
-            
-            // Check for upcoming/scheduled status
-            if (status === 'not_started' || 
-                status === 'scheduled' || 
-                status === 'upcoming' ||
-                status.includes('scheduled') ||
-                status.includes('upcoming') ||
-                match.scheduled_time || 
-                match.scheduled_at ||
-                match.begin_at) {
-                return 'upcoming';
-            }
-            
-            // Default to upcoming if we can't determine
-            return 'upcoming';
-        }
-
-        function displayMatches(matches) {
-            const container = document.getElementById('matchesContainer');
-
             if (matches.length === 0) {
-                container.innerHTML = `
-                    <div class="no-matches">
-                        <h2>🔍 No Matches Found</h2>
-                        <p>Try adjusting your filters or check back later for new matches!</p>
-                    </div>
-                `;
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
                 return;
             }
-
-            container.innerHTML = matches.map(match => createMatchCard(match)).join('');
             
-            // Add click handlers to match cards
-            document.querySelectorAll('.match-card').forEach((card, index) => {
-                card.addEventListener('click', () => showMatchDetails(matches[index]));
-            });
+            emptyState.style.display = 'none';
+            grid.innerHTML = matches.map(match => createMatchCard(match)).join('');
         }
 
+        // Create match card HTML
         function createMatchCard(match) {
-            const status = getMatchStatus(match);
-            const game = formatGameName(match.video_game || match.game || 'Esports');
-            const gameClass = getGameClass(match.video_game || match.game || '');
-            const title = match.name || match.title || 'Match';
             const teams = match.teams || match.opponents || [];
-            const time = match.scheduled_at || match.scheduled_time || match.begin_at || 'TBD';
-            const provider = match.provider || 'Unknown';
-
-            const statusClass = status;
-            const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
-
-            let teamsHTML = '';
-            if (teams.length >= 2) {
-                teamsHTML = `
-                    <div class="match-teams">
-                        <div class="team">
-                            <span class="team-name">${teams[0].name || teams[0].acronym || 'Team 1'}</span>
-                            <span class="team-score">${teams[0].score || '-'}</span>
-                        </div>
-                        <div class="team">
-                            <span class="team-name">${teams[1].name || teams[1].acronym || 'Team 2'}</span>
-                            <span class="team-score">${teams[1].score || '-'}</span>
-                        </div>
-                    </div>
-                `;
-            } else if (teams.length > 0) {
-                teamsHTML = `
-                    <div class="match-teams">
-                        ${teams.map(team => `
-                            <div class="team">
-                                <span class="team-name">${team.name || team.acronym || 'Team'}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            const formattedTime = new Date(time).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
+            const team1 = teams[0] || { name: 'TBD', acronym: 'TBD' };
+            const team2 = teams[1] || { name: 'TBD', acronym: 'TBD' };
+            
+            const status = getMatchStatus(match);
+            const statusClass = status.toLowerCase().replace(' ', '-');
+            const game = getGameInfo(match);
+            
+            const score1 = match.results?.[0]?.score || match.games?.[0]?.teams?.[0]?.score || 0;
+            const score2 = match.results?.[1]?.score || match.games?.[0]?.teams?.[1]?.score || 0;
+            
+            const time = getMatchTime(match);
+            
             return `
-                <div class="match-card ${statusClass}" data-match-id="${match.id || ''}">
-                    <div class="match-game ${gameClass}">${game}</div>
-                    <span class="match-status ${statusClass}">${statusLabel}</span>
-                    <div class="match-title">${title}</div>
-                    ${teamsHTML}
-                    <div class="match-time">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</div>
-                    <div class="match-provider" style="margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: right;">
-                        📡 ${provider}
+                <div class="match-card" onclick="showMatchDetails('${match.id}')">
+                    <div class="match-header">
+                        <div class="match-game">
+                            <span>${game.emoji}</span>
+                            <span>${game.name}</span>
+                        </div>
+                        <div class="match-status status-${statusClass}">${status}</div>
+                    </div>
+                    
+                    <div class="match-teams">
+                        <div class="team">
+                            <div class="team-info">
+                                <div class="team-logo">${team1.acronym?.[0] || team1.name?.[0] || '?'}</div>
+                                <div class="team-name">${team1.name || 'Unknown'}</div>
+                            </div>
+                            <div class="team-score">${score1}</div>
+                        </div>
+                        
+                        <div class="team">
+                            <div class="team-info">
+                                <div class="team-logo">${team2.acronym?.[0] || team2.name?.[0] || '?'}</div>
+                                <div class="team-name">${team2.name || 'Unknown'}</div>
+                            </div>
+                            <div class="team-score">${score2}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="match-footer">
+                        <div class="match-time">⏰ ${time}</div>
+                        <div class="match-actions">
+                            <button class="action-btn" title="View Details">📊</button>
+                            <button class="action-btn" title="AI Analysis">🤖</button>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        function getGameClass(game) {
-            const gameString = String(game).toLowerCase();
-            
-            if (gameString.includes('lol') || gameString.includes('league')) {
-                return 'game-lol';
-            }
-            if (gameString.includes('csgo') || gameString.includes('cs:go') || gameString.includes('counter-strike') || gameString.includes('counter')) {
-                return 'game-csgo';
-            }
-            if (gameString.includes('dota')) {
-                return 'game-dota';
-            }
-            if (gameString.includes('valorant')) {
-                return 'game-valorant';
-            }
-            if (gameString.includes('overwatch')) {
-                return 'game-overwatch';
-            }
-            
-            return '';
+        // Get match status
+        function getMatchStatus(match) {
+            const status = (match.status || '').toLowerCase();
+            if (status.includes('running') || status.includes('live')) return 'Live';
+            if (status.includes('finished')) return 'Finished';
+            return 'Upcoming';
         }
 
-        function formatGameName(game) {
-            const gameString = String(game).toLowerCase();
+        // Get game information
+        function getGameInfo(match) {
+            const game = (match.game || match.videogame?.name || match.videogame?.slug || '').toLowerCase();
             
-            // Map common game names to full display names
             const gameMap = {
-                'lol': '🎮 League of Legends',
-                'league': '🎮 League of Legends',
-                'league-of-legends': '🎮 League of Legends',
-                'csgo': '🔫 Counter-Strike: GO',
-                'cs:go': '🔫 Counter-Strike: GO',
-                'counter-strike': '🔫 Counter-Strike: GO',
-                'cs': '🔫 Counter-Strike: GO',
-                'dota2': '⚔️ Dota 2',
-                'dota 2': '⚔️ Dota 2',
-                'dota': '⚔️ Dota 2',
-                'valorant': '💥 Valorant',
-                'apex': '🎯 Apex Legends',
-                'apex-legends': '🎯 Apex Legends',
-                'apexlegends': '🎯 Apex Legends',
-                'marvel': '🦸‍♂️ Marvel Rivals',
-                'marvel-rivals': '🦸‍♂️ Marvel Rivals',
-                'marvelrivals': '🦸‍♂️ Marvel Rivals',
-                'overwatch': '🦸 Overwatch',
-                'ow': '🦸 Overwatch'
+                'lol': { name: 'League of Legends', emoji: '⚔️' },
+                'league-of-legends': { name: 'League of Legends', emoji: '⚔️' },
+                'csgo': { name: 'CS:GO', emoji: '🔫' },
+                'cs-go': { name: 'CS:GO', emoji: '🔫' },
+                'dota2': { name: 'Dota 2', emoji: '🗡️' },
+                'dota-2': { name: 'Dota 2', emoji: '🗡️' },
+                'valorant': { name: 'Valorant', emoji: '🎯' },
+                'fifa': { name: 'FIFA', emoji: '⚽' },
+                'rl': { name: 'Rocket League', emoji: '🚗' },
+                'rocket-league': { name: 'Rocket League', emoji: '🚗' }
             };
             
             for (const [key, value] of Object.entries(gameMap)) {
-                if (gameString.includes(key)) {
-                    return value;
-                }
+                if (game.includes(key)) return value;
             }
             
-            // If no exact match, try to format nicely
-            // Handle "Counter-Strike" case specifically
-            if (gameString.includes('counter')) {
-                return '🔫 Counter-Strike: GO';
-            }
-            if (gameString.includes('apex')) {
-                return '🎯 Apex Legends';
-            }
-            if (gameString.includes('marvel')) {
-                return '🦸‍♂️ Marvel Rivals';
-            }
-            
-            // Capitalize first letter of each word if no match
-            return game.toString().split(/[-_\s]/).map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
+            return { name: 'Esports', emoji: '🎮' };
         }
 
-        function showMatchDetails(match) {
-            const inlineDetails = document.getElementById('inlineMatchDetails');
-            const modalTitle = document.getElementById('inlineModalTitle');
-            const modalDetails = document.getElementById('inlineModalDetails');
-            const sentimentContent = document.getElementById('inlineSentimentContent');
-            const highlightsSection = document.getElementById('inlineHighlightsSection');
-            const highlightsContent = document.getElementById('inlineHighlightsContent');
+        // Get match time
+        function getMatchTime(match) {
+            const beginAt = match.begin_at || match.scheduled_at || match.start_time;
+            if (!beginAt) return 'Time TBD';
             
-            // Set title
-            modalTitle.textContent = `📋 ${match.name || match.title || 'Match Details'}`;
+            const date = new Date(beginAt);
+            const now = new Date();
+            const diff = date - now;
             
-            // Build details
-            const game = formatGameName(match.video_game || match.game || 'Esports');
-            const status = getMatchStatus(match);
-            const teams = match.teams || match.opponents || [];
-            const time = match.scheduled_at || match.scheduled_time || match.begin_at || 'TBD';
-            const formattedTime = new Date(time).toLocaleString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            let detailsHTML = '';
-            
-            // For finished matches, show result prominently
-            if (status === 'finished' && teams.length >= 2) {
-                const team1Score = parseInt(teams[0].score) || 0;
-                const team2Score = parseInt(teams[1].score) || 0;
-                const team1Won = team1Score > team2Score;
-                const team2Won = team2Score > team1Score;
-                
-                detailsHTML += `
-                    <div class="match-result" style="background: rgba(255,255,255,0.15); border-left: 4px solid #10b981; color: white;">
-                        <div class="result-title" style="color: white; font-size: 1.2em; font-weight: bold; margin-bottom: 15px;">Final Result</div>
-                        <div class="result-teams">
-                            <div class="result-team ${team1Won ? 'winner' : team2Won ? 'loser' : ''}">
-                                <div class="result-team-name">${teams[0].name || teams[0].acronym || 'Team 1'}</div>
-                                <div class="result-team-score">${team1Score}</div>
-                                ${team1Won ? '<div style="font-size: 24px;">🏆</div>' : ''}
-                            </div>
-                            <div class="result-vs">VS</div>
-                            <div class="result-team ${team2Won ? 'winner' : team1Won ? 'loser' : ''}">
-                                <div class="result-team-name">${teams[1].name || teams[1].acronym || 'Team 2'}</div>
-                                <div class="result-team-score">${team2Score}</div>
-                                ${team2Won ? '<div style="font-size: 24px;">🏆</div>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            detailsHTML += `
-                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Game:</span>
-                    <span class="detail-value" style="color: white; font-weight: 600;">${game}</span>
-                </div>
-                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Status:</span>
-                    <span class="detail-value" style="color: white; font-weight: 600;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                </div>
-                <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                    <span class="detail-label" style="color: rgba(255,255,255,0.8);">Scheduled:</span>
-                    <span class="detail-value" style="color: white; font-weight: 600;">${formattedTime !== 'Invalid Date' ? formattedTime : 'TBD'}</span>
-                </div>
-            `;
-            
-            if (teams.length >= 2 && status !== 'finished') {
-                detailsHTML += `
-                    <div class="detail-row" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                        <span class="detail-label" style="color: rgba(255,255,255,0.8);">Team 1:</span>
-                        <span class="detail-value" style="color: white; font-weight: 600;">${teams[0].name || teams[0].acronym || 'Team 1'} ${teams[0].score ? `(${teams[0].score})` : ''}</span>
-                    </div>
-                    <div class="detail-row" style="color: white; border-bottom: none;">
-                        <span class="detail-label" style="color: rgba(255,255,255,0.8);">Team 2:</span>
-                        <span class="detail-value" style="color: white; font-weight: 600;">${teams[1].name || teams[1].acronym || 'Team 2'} ${teams[1].score ? `(${teams[1].score})` : ''}</span>
-                    </div>
-                `;
-            }
-            
-            modalDetails.innerHTML = detailsHTML;
-            
-            // Show highlights section for finished and live matches
-            if (status === 'finished' || status === 'live') {
-                highlightsSection.style.display = 'block';
-                loadHighlights(match, status, highlightsContent);
+            if (diff < 0) {
+                // Match started
+                return 'Started ' + formatRelativeTime(-diff);
+            } else if (diff < 3600000) {
+                // Less than 1 hour
+                return 'Starting in ' + Math.ceil(diff / 60000) + ' minutes';
+            } else if (diff < 86400000) {
+                // Less than 24 hours
+                return 'Today at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             } else {
-                highlightsSection.style.display = 'none';
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             }
-            
-            // Load sentiment analysis
-            loadSentiment(match, sentimentContent);
-            
-            // Show inline details
-            inlineDetails.style.display = 'block';
-            
-            // Scroll to the details section
-            setTimeout(() => {
-                inlineDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-            
-            // Also show team stats and sentiment sections for this match
-            showMatchTeamStats(match);
-            showMatchSentiment(match);
-        }
-        
-        function closeInlineDetails() {
-            const inlineDetails = document.getElementById('inlineMatchDetails');
-            inlineDetails.style.display = 'none';
-            
-            // Also hide team stats section
-            const teamStatsSection = document.getElementById('teamStatsSection');
-            if (teamStatsSection) {
-                teamStatsSection.style.display = 'none';
-            }
-            
-            // Hide sentiment section
-            const sentimentSection = document.getElementById('sentimentSection');
-            if (sentimentSection) {
-                sentimentSection.style.display = 'none';
-            }
-            
-            // Scroll back to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function showMatchTeamStats(match) {
-            const section = document.getElementById('teamStatsSection');
-            const titleEl = document.getElementById('selectedMatchTitle');
-            const teamsEl = document.getElementById('selectedMatchTeams');
-            const container = document.getElementById('teamStatsContainer');
-            const playerLinksContainer = document.getElementById('playerLinksContainer');
-            
-            // Show the section
-            section.style.display = 'block';
-            
-            // Scroll to the section
-            setTimeout(() => {
-                section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 300);
-            
-            // Update match info
-            titleEl.textContent = match.name || match.title || 'Match Details';
-            const teams = match.teams || match.opponents || [];
-            if (teams.length >= 2) {
-                teamsEl.textContent = `${teams[0].name || teams[0].acronym} vs ${teams[1].name || teams[1].acronym}`;
-            } else {
-                teamsEl.textContent = 'Team statistics';
-            }
-            
-            // Update match metadata
-            const game = (match.video_game || match.game || 'Esports').toLowerCase();
-            const status = getMatchStatus(match);
-            const provider = match.provider || match.source || 'Unknown';
-            
-            document.getElementById('matchStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
-            document.getElementById('matchGame').textContent = formatGameName(game);
-            document.getElementById('matchProvider').textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
-            
-            // Update streaming links based on game
-            updateStreamingLinks(game, status, teams);
-            
-            // Load player links
-            loadPlayerLinks(game, teams);
-            
-            // Load stats for the teams in this match
-            if (teams.length >= 2) {
-                const teamNames = teams.map(t => t.name || t.acronym);
-                loadTeamStatsForMatch(teamNames);
-            } else {
-                container.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-label">No team information available for this match</div>
-                    </div>
-                `;
-            }
-        }
-        
-        function updateStreamingLinks(game, status, teams) {
-            const twitchLink = document.getElementById('twitchLink');
-            const youtubeLink = document.getElementById('youtubeLink');
-            const officialLink = document.getElementById('officialLink');
-            
-            // Game-specific streaming channels
-            const streamingChannels = {
-                'league of legends': {
-                    twitch: 'https://twitch.tv/riotgames',
-                    youtube: 'https://youtube.com/c/lolesports',
-                    official: 'https://lolesports.com'
-                },
-                'csgo': {
-                    twitch: 'https://twitch.tv/counter-strike',
-                    youtube: 'https://youtube.com/c/CSGO',
-                    official: 'https://www.hltv.org/matches'
-                },
-                'dota 2': {
-                    twitch: 'https://twitch.tv/dota2',
-                    youtube: 'https://youtube.com/c/dota2',
-                    official: 'https://www.dota2.com/esports'
-                },
-                'valorant': {
-                    twitch: 'https://twitch.tv/valorant',
-                    youtube: 'https://youtube.com/c/ValorantEsports',
-                    official: 'https://valorantesports.com'
-                },
-                'apex legends': {
-                    twitch: 'https://twitch.tv/playapex',
-                    youtube: 'https://youtube.com/c/PlayApex',
-                    official: 'https://www.ea.com/games/apex-legends/compete'
-                },
-                'marvel rivals': {
-                    twitch: 'https://twitch.tv/marvelrivals',
-                    youtube: 'https://youtube.com/@marvelrivals',
-                    official: 'https://www.marvelrivals.com/esports'
-                },
-                'overwatch': {
-                    twitch: 'https://twitch.tv/overwatchleague',
-                    youtube: 'https://youtube.com/c/OverwatchLeague',
-                    official: 'https://overwatchleague.com'
-                }
-            };
-            
-            const channels = streamingChannels[game] || {
-                twitch: 'https://twitch.tv/directory/esports',
-                youtube: 'https://youtube.com/gaming',
-                official: '#'
-            };
-            
-            twitchLink.href = channels.twitch;
-            youtubeLink.href = channels.youtube;
-            officialLink.href = channels.official;
-            
-            // Add status indicator for live matches
-            if (status === 'live') {
-                twitchLink.innerHTML = '🔴 Twitch (LIVE)';
-                youtubeLink.innerHTML = '🔴 YouTube (LIVE)';
-                officialLink.innerHTML = '🔴 Official (LIVE)';
-            } else {
-                twitchLink.innerHTML = 'Twitch';
-                youtubeLink.innerHTML = 'YouTube';
-                officialLink.innerHTML = 'Official Stream';
-            }
-        }
-        
-        function loadPlayerLinks(game, teams) {
-            const playerLinksContainer = document.getElementById('playerLinksContainer');
-            
-            if (!teams || teams.length === 0) {
-                playerLinksContainer.innerHTML = '<div style="text-align: center; padding: 10px;">No player information available</div>';
-                return;
-            }
-            
-            // Player stat URLs by game
-            const playerStatUrls = {
-                'league of legends': (playerName) => `https://u.gg/lol/profile/${encodeURIComponent(playerName)}/overview`,
-                'csgo': (playerName) => `https://www.hltv.org/search?term=${encodeURIComponent(playerName)}`,
-                'dota 2': (playerName) => `https://www.opendota.com/search?q=${encodeURIComponent(playerName)}`,
-                'valorant': (playerName) => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(playerName)}/overview`,
-                'apex legends': (playerName) => `https://apex.tracker.gg/apex/profile/pc/${encodeURIComponent(playerName)}/overview`,
-                'marvel rivals': (playerName) => `https://tracker.gg/marvel-rivals/profile/${encodeURIComponent(playerName)}/overview`,
-                'overwatch': (playerName) => `https://overwatch.blizzard.com/en-us/search/?q=${encodeURIComponent(playerName)}`
-            };
-            
-            const getPlayerUrl = playerStatUrls[game] || ((name) => `#`);
-            
-            let html = '';
-            teams.forEach(team => {
-                const teamName = team.name || team.acronym || 'Unknown Team';
-                const players = team.players || [];
-                
-                if (players.length > 0) {
-                    html += `<div style="grid-column: 1 / -1; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 10px;">
-                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">${teamName}</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
-                    
-                    players.forEach(player => {
-                        const playerName = player.name || player.summoner_name || player.ign || 'Player';
-                        const url = getPlayerUrl(playerName);
-                        html += `<a href="${url}" target="_blank" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; transition: background 0.3s;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">
-                            ${playerName}
-                        </a>`;
-                    });
-                    
-                    html += `</div></div>`;
-                } else {
-                    // Generate sample players if none provided
-                    html += `<div style="grid-column: 1 / -1; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 10px;">
-                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">${teamName}</div>
-                        <div style="font-size: 0.9em; opacity: 0.7;">Player roster not available</div>
-                    </div>`;
-                }
-            });
-            
-            if (html === '') {
-                html = '<div style="text-align: center; padding: 10px; opacity: 0.7;">Player information will be displayed here when available</div>';
-            }
-            
-            playerLinksContainer.innerHTML = html;
+        // Format relative time
+        function formatRelativeTime(ms) {
+            const minutes = Math.floor(ms / 60000);
+            if (minutes < 60) return minutes + 'm ago';
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + 'h ago';
+            const days = Math.floor(hours / 24);
+            return days + 'd ago';
         }
 
-        async function loadTeamStatsForMatch(teamNames) {
-            const container = document.getElementById('teamStatsContainer');
+        // Update header stats
+        function updateStats() {
+            const live = allMatches.filter(m => getMatchStatus(m) === 'Live').length;
+            const upcoming = allMatches.filter(m => getMatchStatus(m) === 'Upcoming').length;
+            
+            document.getElementById('liveCount').textContent = live;
+            document.getElementById('upcomingCount').textContent = upcoming;
+            document.getElementById('totalCount').textContent = allMatches.length;
+        }
+
+        // Show match details modal
+        async function showMatchDetails(matchId) {
+            const modal = document.getElementById('matchModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modal.classList.add('active');
+            modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading details...</p></div>';
             
             try {
-                const teamStatsPromises = teamNames.map(team => 
-                    fetch(`/api/team_stats?team_name=${encodeURIComponent(team)}`).then(r => r.json())
-                );
+                const [matchResponse, sentimentResponse] = await Promise.all([
+                    fetch(`/api/matches/${matchId}`),
+                    fetch(`/api/sentiment?match_id=${matchId}`)
+                ]);
                 
-                const teamStats = await Promise.all(teamStatsPromises);
+                const match = await matchResponse.json();
+                const sentiment = await sentimentResponse.json();
                 
-                container.innerHTML = teamStats.map(stats => `
-                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">${stats.team_name}</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
-                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
-                            <div><strong>Matches:</strong> ${stats.total_matches}</div>
-                            <div><strong>Record:</strong> ${stats.wins}W-${stats.losses}L-${stats.draws}D</div>
-                            <div><strong>Form:</strong> ${stats.recent_form || 'N/A'}</div>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
-                            <div style="font-size: 0.85em;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
-                            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;">Confidence: ${stats.confidence}%</div>
-                        </div>
-                    </div>
-                `).join('');
-                
+                modalBody.innerHTML = renderMatchDetails(match, sentiment);
             } catch (error) {
-                console.error('Error loading team stats:', error);
-                container.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-label" style="color: #ef4444;">Error loading team statistics</div>
-                    </div>
-                `;
+                console.error('Error loading match details:', error);
+                modalBody.innerHTML = '<p>Error loading match details.</p>';
             }
         }
 
-        function showMatchSentiment(match) {
-            const section = document.getElementById('sentimentSection');
-            const container = document.getElementById('sentimentContainer');
-            
-            // Show the section
-            section.style.display = 'block';
-            
-            // Load sentiment for this specific match
-            loadMatchSentiment(match);
-        }
-
-        async function loadMatchSentiment(match) {
-            const container = document.getElementById('sentimentContainer');
-            
-            try {
-                const matchId = match.id;
-                const response = await fetch(`/api/sentiment?match_id=${encodeURIComponent(matchId)}`);
-                const sentiment = await response.json();
-                
-                const sentimentEmoji = sentiment.overall_sentiment === 'Very Positive' ? '🤩' :
-                                      sentiment.overall_sentiment === 'Positive' ? '😊' : 
-                                      sentiment.overall_sentiment === 'Negative' ? '😟' : '😐';
-                
-                const excitementColor = sentiment.excitement_level >= 80 ? '#10b981' : 
-                                       sentiment.excitement_level >= 60 ? '#f59e0b' : '#6b7280';
-                
-                container.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">${sentimentEmoji}</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Match Sentiment</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${sentiment.overall_sentiment}</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">Confidence: ${sentiment.confidence}%</div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">🔥</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Excitement</div>
-                            <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px; color: ${excitementColor};">${sentiment.excitement_level}%</div>
-                            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 5px;">${sentiment.fan_engagement || 'High'}</div>
-                        </div>
-                        
-                        <div style="text-align: center;">
-                            <div style="font-size: 3em; margin-bottom: 10px;">📊</div>
-                            <div style="font-size: 1.2em; font-weight: 600; color: #667eea;">Trending</div>
-                            <div style="font-size: 0.9em; margin-top: 10px;">
-                                ${(sentiment.trending_topics || []).map(topic => 
-                                    `<span style="display: inline-block; background: #667eea; color: white; padding: 5px 12px; border-radius: 15px; margin: 3px; font-size: 0.85em;">${topic}</span>`
-                                ).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-            } catch (error) {
-                console.error('Error loading match sentiment:', error);
-                container.innerHTML = `
-                    <div style="text-align: center; color: #ef4444;">
-                        <p>Error loading sentiment analysis for this match</p>
-                    </div>
-                `;
-            }
-        }
-
-        function hideMatchDetails() {
-            document.getElementById('teamStatsSection').style.display = 'none';
-            document.getElementById('sentimentSection').style.display = 'none';
-            // Scroll back to matches
-            document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function showPlayerStats() {
-            const section = document.getElementById('playerStatsSection');
-            section.style.display = 'block';
-            section.scrollIntoView({ behavior: 'smooth' });
-            loadPlayerStats();
-        }
-
-        function hidePlayerStats() {
-            document.getElementById('playerStatsSection').style.display = 'none';
-            document.getElementById('matchesContainer').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function loadHighlights(match, status, highlightsContent) {
+        // Render match details
+        function renderMatchDetails(match, sentiment) {
             const teams = match.teams || match.opponents || [];
-            const game = (match.video_game || match.game || '').toLowerCase();
+            const team1 = teams[0] || { name: 'TBD' };
+            const team2 = teams[1] || { name: 'TBD' };
             
-            // Generate mock highlights based on match data
-            const highlights = generateHighlights(match, status, teams, game);
-            
-            if (highlights.length === 0) {
-                highlightsContent.innerHTML = `
-                    <div class="sentiment-description" style="text-align: center; padding: 20px;">
-                        No highlights available yet. Check back after the match concludes!
+            return `
+                <div style="margin-bottom: 1.5rem;">
+                    <h3>${team1.name} vs ${team2.name}</h3>
+                    <p style="color: var(--text-muted);">${match.tournament?.name || match.league?.name || 'Tournament'}</p>
+                </div>
+                
+                ${sentiment.ok ? `
+                    <div style="background: var(--dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <h4>AI Sentiment Analysis</h4>
+                        <p>Overall: <span class="sentiment-badge sentiment-${sentiment.overall_sentiment?.toLowerCase() || 'neutral'}">${sentiment.overall_sentiment || 'Neutral'}</span></p>
+                        <p>Excitement Level: ${sentiment.excitement_level || 0}/100</p>
+                        <p>Fan Engagement: ${sentiment.fan_engagement || 'Unknown'}</p>
+                        ${sentiment.trending_topics ? `<p>Trending: ${sentiment.trending_topics.join(', ')}</p>` : ''}
                     </div>
-                `;
-                return;
-            }
-            
-            highlightsContent.innerHTML = `
-                <div class="highlights-grid">
-                    ${highlights.map(highlight => `
-                        <div class="highlight-card" onclick="alert('This would open: ${highlight.title}')">
-                            <div class="highlight-thumbnail">${highlight.emoji}</div>
-                            <div class="highlight-title">${highlight.title}</div>
-                            <div class="highlight-meta">${highlight.meta}</div>
-                        </div>
-                    `).join('')}
+                ` : ''}
+                
+                <div style="background: var(--dark); padding: 1rem; border-radius: 8px;">
+                    <h4>Match Information</h4>
+                    <p>Status: ${match.status || 'Unknown'}</p>
+                    <p>Format: ${match.match_type || match.number_of_games || 'Best of 3'}</p>
+                    ${match.streams_list?.[0] ? `<p><a href="${match.streams_list[0].raw_url}" target="_blank" style="color: var(--primary);">📺 Watch Live</a></p>` : ''}
                 </div>
             `;
         }
 
-        function generateHighlights(match, status, teams, game) {
-            const highlights = [];
-            
-            if (status === 'finished') {
-                // Generate highlights for finished matches
-                const team1 = teams[0]?.name || teams[0]?.acronym || 'Team 1';
-                const team2 = teams[1]?.name || teams[1]?.acronym || 'Team 2';
-                
-                highlights.push({
-                    emoji: '🎬',
-                    title: 'Full Match Recap',
-                    meta: 'Complete game highlights'
-                });
-                
-                highlights.push({
-                    emoji: '🔥',
-                    title: 'Best Plays',
-                    meta: 'Top 5 moments'
-                });
-                
-                highlights.push({
-                    emoji: '⚡',
-                    title: `${team1} Key Plays`,
-                    meta: 'Team highlights'
-                });
-                
-                highlights.push({
-                    emoji: '💥',
-                    title: `${team2} Key Plays`,
-                    meta: 'Team highlights'
-                });
-                
-                if (game.includes('lol') || game.includes('league')) {
-                    highlights.push({
-                        emoji: '🐉',
-                        title: 'Baron/Dragon Fights',
-                        meta: 'Objective control'
-                    });
-                    highlights.push({
-                        emoji: '🎯',
-                        title: 'Pentakills & Outplays',
-                        meta: 'Individual plays'
-                    });
-                } else if (game.includes('csgo') || game.includes('counter-strike')) {
-                    highlights.push({
-                        emoji: '💣',
-                        title: 'Clutch Moments',
-                        meta: '1v3+ situations'
-                    });
-                    highlights.push({
-                        emoji: '🎯',
-                        title: 'Ace Rounds',
-                        meta: 'Single player eliminations'
-                    });
-                } else if (game.includes('dota')) {
-                    highlights.push({
-                        emoji: '🛡️',
-                        title: 'Teamfight Breakdown',
-                        meta: 'Major engagements'
-                    });
-                    highlights.push({
-                        emoji: '🏰',
-                        title: 'Base Defense',
-                        meta: 'Critical moments'
-                    });
-                } else if (game.includes('valorant')) {
-                    highlights.push({
-                        emoji: '🎯',
-                        title: 'Spike Rush Highlights',
-                        meta: 'Clutch defuses'
-                    });
-                    highlights.push({
-                        emoji: '⚡',
-                        title: 'Ability Combos',
-                        meta: 'Ultimate plays'
-                    });
-                } else if (game.includes('overwatch')) {
-                    highlights.push({
-                        emoji: '🦸',
-                        title: 'Play of the Game',
-                        meta: 'Best moments'
-                    });
-                    highlights.push({
-                        emoji: '🎮',
-                        title: 'Ultimate Combos',
-                        meta: 'Team coordination'
-                    });
-                }
-                
-                highlights.push({
-                    emoji: '📊',
-                    title: 'Post-Match Analysis',
-                    meta: 'Stats & breakdown'
-                });
-                
-                highlights.push({
-                    emoji: '🎤',
-                    title: 'Player Interviews',
-                    meta: 'Post-game reactions'
-                });
-                
-            } else if (status === 'live') {
-                // Generate highlights for live matches
-                highlights.push({
-                    emoji: '🔴',
-                    title: 'Watch Live',
-                    meta: 'Stream currently active'
-                });
-                
-                highlights.push({
-                    emoji: '⚡',
-                    title: 'Live Updates',
-                    meta: 'Real-time coverage'
-                });
-                
-                highlights.push({
-                    emoji: '💬',
-                    title: 'Live Chat',
-                    meta: 'Join the discussion'
-                });
-            }
-            
-            return highlights;
+        // Close modal
+        function closeModal() {
+            document.getElementById('matchModal').classList.remove('active');
         }
 
-        async function loadSentiment(match, sentimentContent) {
-            sentimentContent.innerHTML = `
-                <div class="sentiment-loading">
-                    <div class="spinner"></div>
-                    <p>Analyzing sentiment...</p>
+        // Close modal on outside click
+        document.getElementById('matchModal').addEventListener('click', (e) => {
+            if (e.target.id === 'matchModal') closeModal();
+        });
+
+        // Search matches
+        function searchMatches() {
+            filterMatches();
+        }
+
+        // Refresh data
+        function refreshData() {
+            document.getElementById('loadingState').style.display = 'block';
+            loadMatches();
+        }
+
+        // Show error message
+        function showError(message) {
+            const grid = document.getElementById('matchesGrid');
+            grid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                    <p style="color: var(--danger); font-size: 1.125rem;">⚠️ ${message}</p>
                 </div>
             `;
-            
-            try {
-                // Generate sentiment based on match data
-                const sentiment = generateSentiment(match);
-                
-                // Generate team and game links
-                const teams = match.teams || match.opponents || [];
-                const game = match.video_game || match.game || 'Unknown';
-                const gameLinks = sentiment.gameLinks || [];
-                const teamLinks = sentiment.teamLinks || [];
-                
-                // Build game links HTML
-                let gameLinksHtml = '';
-                if (gameLinks.length > 0) {
-                    gameLinksHtml = '<strong>Resources:</strong><br>';
-                    gameLinksHtml += gameLinks.map(link => 
-                        `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`
-                    ).join('<br>');
-                }
-                
-                // Build teams HTML
-                let teamsHtml = '';
-                if (teams.length > 0) {
-                    teamsHtml = '<div class="sentiment-card"><div class="sentiment-label">👥 Team Information</div><div class="sentiment-description" style="margin-top: 10px;">';
-                    teams.forEach((team, idx) => {
-                        teamsHtml += `<div style="margin-bottom: 15px;"><strong>${team.name || team.acronym || `Team ${idx + 1}`}</strong><br>`;
-                        if (teamLinks[idx] && teamLinks[idx].length > 0) {
-                            teamsHtml += teamLinks[idx].map(link => 
-                                `• <a href="${link.url}" target="_blank" style="color: #667eea; text-decoration: none;">${link.text}</a>`
-                            ).join('<br>');
-                        }
-                        teamsHtml += '</div>';
-                    });
-                    teamsHtml += '</div></div>';
-                }
-                
-                sentimentContent.innerHTML = `
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">Overall Sentiment</div>
-                        <div class="sentiment-value sentiment-${sentiment.overall.toLowerCase()}">${sentiment.overall}</div>
-                        <div class="sentiment-bar">
-                            <div class="sentiment-bar-fill sentiment-bar-${sentiment.overall.toLowerCase()}" 
-                                 style="width: ${sentiment.confidence}%"></div>
-                        </div>
-                        <div class="sentiment-description">${sentiment.description}</div>
-                    </div>
-                    
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">Fan Excitement</div>
-                        <div class="sentiment-bar">
-                            <div class="sentiment-bar-fill sentiment-bar-positive" 
-                                 style="width: ${sentiment.excitement}%"></div>
-                        </div>
-                        <div class="sentiment-description">
-                            ${sentiment.excitement}% excitement level - ${sentiment.excitementText}
-                        </div>
-                    </div>
-                    
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">Match Importance</div>
-                        <div class="sentiment-bar">
-                            <div class="sentiment-bar-fill sentiment-bar-neutral" 
-                                 style="width: ${sentiment.importance}%"></div>
-                        </div>
-                        <div class="sentiment-description">
-                            ${sentiment.importanceText}
-                        </div>
-                    </div>
-                    
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">Community Buzz</div>
-                        <div class="sentiment-description" style="margin-top: 10px;">
-                            ${sentiment.buzzPoints.map(point => `• ${point}`).join('<br>')}
-                        </div>
-                    </div>
-                    
-                    <div class="sentiment-card">
-                        <div class="sentiment-label">🎮 Game Information</div>
-                        <div class="sentiment-description" style="margin-top: 10px;">
-                            <strong>Game:</strong> ${game}<br>
-                            ${gameLinksHtml}
-                        </div>
-                    </div>
-                    
-                    ${teamsHtml}
-                `;
-            } catch (error) {
-                console.error('Error generating sentiment:', error);
-                sentimentContent.innerHTML = `
-                    <div class="sentiment-card">
-                        <div class="sentiment-description" style="color: #ef4444;">
-                            ❌ Unable to generate sentiment analysis at this time.
-                        </div>
-                    </div>
-                `;
-            }
         }
 
-        function generateSentiment(match) {
-            const status = getMatchStatus(match);
-            const teams = match.teams || match.opponents || [];
-            const game = (match.video_game || match.game || '').toLowerCase();
-            const title = (match.name || match.title || '').toLowerCase();
-            
-            // Determine sentiment based on match characteristics
-            let overall = 'Neutral';
-            let confidence = 70;
-            let description = 'Fans are moderately interested in this matchup.';
-            let excitement = 60;
-            let excitementText = 'Moderate anticipation';
-            let importance = 50;
-            let importanceText = 'Regular season match';
-            let buzzPoints = [];
-            
-            // Generate game-specific links
-            let gameLinks = [];
-            if (game.includes('league') || game.includes('lol')) {
-                gameLinks.push(
-                    { text: 'LoL Esports Official', url: 'https://lolesports.com/' },
-                    { text: 'Riot Games', url: 'https://www.riotgames.com/' },
-                    { text: 'Leaguepedia', url: 'https://lol.fandom.com/wiki/League_of_Legends_Esports_Wiki' }
-                );
-            } else if (game.includes('csgo') || game.includes('counter-strike')) {
-                gameLinks.push(
-                    { text: 'HLTV (CS Hub)', url: 'https://www.hltv.org/' },
-                    { text: 'CS:GO Official', url: 'https://www.counter-strike.net/' },
-                    { text: 'Liquipedia CS', url: 'https://liquipedia.net/counterstrike/' }
-                );
-            } else if (game.includes('dota')) {
-                gameLinks.push(
-                    { text: 'Dota 2 Official', url: 'https://www.dota2.com/' },
-                    { text: 'Liquipedia Dota', url: 'https://liquipedia.net/dota2/' },
-                    { text: 'Dotabuff', url: 'https://www.dotabuff.com/' }
-                );
-            } else if (game.includes('valorant')) {
-                gameLinks.push(
-                    { text: 'VALORANT Esports', url: 'https://valorantesports.com/' },
-                    { text: 'VLR.gg', url: 'https://www.vlr.gg/' },
-                    { text: 'Liquipedia VALORANT', url: 'https://liquipedia.net/valorant/' }
-                );
-            } else if (game.includes('apex')) {
-                gameLinks.push(
-                    { text: 'ALGS Official', url: 'https://www.ea.com/games/apex-legends/compete/overview' },
-                    { text: 'Apex Legends Esports', url: 'https://liquipedia.net/apexlegends/' }
-                );
-            } else if (game.includes('marvel')) {
-                gameLinks.push(
-                    { text: 'Marvel Rivals Official', url: 'https://www.marvelrivals.com/' }
-                );
-            } else if (game.includes('overwatch')) {
-                gameLinks.push(
-                    { text: 'Overwatch League', url: 'https://overwatchleague.com/' },
-                    { text: 'Liquipedia OW', url: 'https://liquipedia.net/overwatch/' }
-                );
-            }
-            
-            // Generate team-specific links
-            let teamLinks = teams.map(team => {
-                const teamName = team.name || team.acronym || '';
-                const links = [];
-                
-                // Add Liquipedia link for the team
-                if (teamName) {
-                    const encodedName = encodeURIComponent(teamName.replace(/ /g, '_'));
-                    if (game.includes('league') || game.includes('lol')) {
-                        links.push({ text: 'Leaguepedia', url: `https://lol.fandom.com/wiki/${encodedName}` });
-                    } else if (game.includes('csgo') || game.includes('counter-strike')) {
-                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/counterstrike/${encodedName}` });
-                    } else if (game.includes('dota')) {
-                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/dota2/${encodedName}` });
-                    } else if (game.includes('valorant')) {
-                        links.push({ text: 'Liquipedia', url: `https://liquipedia.net/valorant/${encodedName}` });
-                    }
-                    
-                    // Add Twitter/X search link
-                    links.push({ text: 'Twitter/X', url: `https://twitter.com/search?q=${encodeURIComponent(teamName)}&src=typed_query` });
-                }
-                
-                // Add streaming links if available
-                if (team.streaming_link) {
-                    links.push({ text: 'Live Stream', url: team.streaming_link });
-                }
-                
-                return links;
-            });
-            
-            // Finished matches have post-game analysis sentiment
-            if (status === 'finished') {
-                overall = 'Positive';
-                confidence = 80;
-                excitement = 65;
-                excitementText = 'Post-match discussion active';
-                
-                if (teams.length >= 2) {
-                    const team1Score = parseInt(teams[0].score) || 0;
-                    const team2Score = parseInt(teams[1].score) || 0;
-                    const winner = team1Score > team2Score ? (teams[0].name || teams[0].acronym) : (teams[1].name || teams[1].acronym);
-                    
-                    if (Math.abs(team1Score - team2Score) <= 1) {
-                        overall = 'Positive';
-                        confidence = 90;
-                        excitement = 85;
-                        excitementText = 'Close match! High community engagement';
-                        description = `What a thriller! Fans are buzzing about this incredibly close match. ${winner} pulled off a narrow victory!`;
-                        buzzPoints.push(`Close match: ${team1Score}-${team2Score}`);
-                        buzzPoints.push('Nail-biting finish');
-                        buzzPoints.push('High-quality gameplay');
-                    } else if (Math.abs(team1Score - team2Score) >= 3) {
-                        description = `Dominant performance by ${winner}! Fans discussing the one-sided result.`;
-                        buzzPoints.push(`Decisive victory: ${team1Score}-${team2Score}`);
-                        buzzPoints.push('One team outclassed the other');
-                    } else {
-                        description = `${winner} takes the win! Fans analyzing the key moments and standout plays.`;
-                        buzzPoints.push(`Final score: ${team1Score}-${team2Score}`);
-                        buzzPoints.push('Competitive match overall');
-                    }
-                    
-                    buzzPoints.push('Highlights and VODs available');
-                    buzzPoints.push('Player performance stats out');
-                    buzzPoints.push('Community analyzing key plays');
-                }
-            } 
-            // Live matches generate more excitement
-            else if (status === 'live') {
-                overall = 'Positive';
-                confidence = 85;
-                excitement = 90;
-                excitementText = 'High energy - match is happening now!';
-                description = 'Fans are very excited! The match is currently live with active gameplay.';
-                buzzPoints.push('Match currently in progress');
-                buzzPoints.push('Real-time updates available');
-                buzzPoints.push('Live chat highly active');
-            } 
-            // Upcoming matches
-            else if (status === 'upcoming') {
-                excitement = 75;
-                excitementText = 'Growing anticipation';
-                description = 'Fans are looking forward to this upcoming matchup.';
-                buzzPoints.push('Scheduled for upcoming play');
-                buzzPoints.push('Pre-match predictions trending');
-            }
-            
-            // Championship/playoff matches are more important
-            if (title.includes('final') || title.includes('championship') || title.includes('playoff')) {
-                overall = 'Positive';
-                confidence = 95;
-                excitement = Math.min(excitement + 20, 100);
-                importance = 95;
-                importanceText = 'High stakes championship match';
-                
-                if (status === 'finished') {
-                    description = 'Championship concluded! Massive community engagement with the results and highlights.';
-                } else {
-                    description = 'Major tournament match! Fans are highly engaged and excited.';
-                }
-                buzzPoints.push('Championship stakes');
-                buzzPoints.push('High community engagement');
-            } else if (title.includes('semifinal') || title.includes('quarter')) {
-                importance = 80;
-                importanceText = 'Playoff elimination match';
-                buzzPoints.push('Elimination round');
-            } else if (title.includes('worlds') || title.includes('international')) {
-                importance = 90;
-                importanceText = 'International competition';
-                buzzPoints.push('International event');
-            }
-            
-            // Popular games generate more buzz
-            const popularGames = ['lol', 'league', 'csgo', 'dota', 'valorant'];
-            if (popularGames.some(g => game.includes(g))) {
-                buzzPoints.push('Popular esport title');
-                excitement = Math.min(excitement + 10, 100);
-            }
-            
-            // Check for team rivalry or popular teams
-            if (teams.length >= 2) {
-                const team1 = (teams[0].name || teams[0].acronym || '').toLowerCase();
-                const team2 = (teams[1].name || teams[1].acronym || '').toLowerCase();
-                
-                const famousTeams = ['t1', 'g2', 'fnatic', 'cloud9', 'tsm', 'liquid', 'faze', 'navi', 'sentinels'];
-                if (famousTeams.some(t => team1.includes(t) || team2.includes(t))) {
-                    buzzPoints.push('Popular team competing');
-                    excitement = Math.min(excitement + 15, 100);
-                    overall = 'Positive';
-                }
-                
-                buzzPoints.push(`${teams[0].name || teams[0].acronym} vs ${teams[1].name || teams[1].acronym}`);
-            }
-            
-            // Add score discussion if available
-            if (teams.length >= 2 && (teams[0].score || teams[1].score)) {
-                if (status !== 'finished') {
-                    buzzPoints.push('Live score updates');
-                }
-            }
-            
-            // Ensure we have at least some buzz points
-            if (buzzPoints.length === 0) {
-                buzzPoints.push('Community watching closely');
-                buzzPoints.push('Standard competitive match');
-            }
-            
-            return {
-                overall,
-                confidence,
-                description,
-                excitement,
-                excitementText,
-                importance,
-                importanceText,
-                buzzPoints,
-                gameLinks,
-                teamLinks
-            };
-        }
-
-        async function updateStats() {
-            try {
-                // Get selected data source
-                const dataSource = document.getElementById('dataSource').value;
-                const url = dataSource ? `/api/match_stats?provider=${dataSource}` : '/api/match_stats';
-                
-                const response = await fetch(url);
-                const stats = await response.json();
-                
-                // Update the display with API data
-                document.getElementById('totalMatches').textContent = stats.total || 0;
-                document.getElementById('liveMatches').textContent = stats.live || 0;
-                document.getElementById('upcomingMatches').textContent = stats.upcoming || 0;
-                document.getElementById('finishedMatches').textContent = stats.finished || 0;
-                
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-                // Fallback to local calculation if API fails
-                const total = allMatches.length;
-                const live = allMatches.filter(m => getMatchStatus(m) === 'live').length;
-                const upcoming = allMatches.filter(m => getMatchStatus(m) === 'upcoming').length;
-                const finished = allMatches.filter(m => getMatchStatus(m) === 'finished').length;
-
-                document.getElementById('totalMatches').textContent = total;
-                document.getElementById('liveMatches').textContent = live;
-                document.getElementById('upcomingMatches').textContent = upcoming;
-                document.getElementById('finishedMatches').textContent = finished;
-            }
-        }
-
-        async function loadTeamStats() {
-            const container = document.getElementById('teamStatsContainer');
-            
-            try {
-                // Get stats for multiple popular teams
-                const teams = ['T1', 'G2', 'Fnatic', 'Cloud9', 'Team Liquid'];
-                const teamStatsPromises = teams.map(team => 
-                    fetch(`/api/team_stats?team_name=${encodeURIComponent(team)}`).then(r => r.json())
-                );
-                
-                const teamStats = await Promise.all(teamStatsPromises);
-                
-                container.innerHTML = teamStats.map(stats => `
-                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">${stats.team_name}</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
-                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
-                            <div><strong>Matches:</strong> ${stats.total_matches}</div>
-                            <div><strong>Record:</strong> ${stats.wins}W-${stats.losses}L-${stats.draws}D</div>
-                            <div><strong>Form:</strong> ${stats.recent_form || 'N/A'}</div>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
-                            <div style="font-size: 0.85em;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
-                            <div style="font-size: 0.75em; opacity: 0.8; margin-top: 5px;">Confidence: ${stats.confidence}%</div>
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Error loading team stats:', error);
-                container.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-label" style="color: #ef4444;">Error loading team statistics</div>
-                    </div>
-                `;
-            }
-        }
-
-        async function loadPlayerStats() {
-            const container = document.getElementById('playerStatsContainer');
-            
-            try {
-                // Get stats for sample players
-                const players = ['Faker', 'Caps', 'Rekkles', 'Perkz', 'Bjergsen'];
-                const playerStatsPromises = players.map(player => 
-                    fetch(`/api/player_stats?player_name=${encodeURIComponent(player)}`).then(r => r.json())
-                );
-                
-                const playerStats = await Promise.all(playerStatsPromises);
-                
-                container.innerHTML = playerStats.map(stats => `
-                    <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">🎮 ${stats.player_name}</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
-                            <div><strong>Games:</strong> ${stats.games_played}</div>
-                            <div><strong>Win Rate:</strong> ${stats.win_rate}%</div>
-                            <div><strong>KDA:</strong> ${stats.kda_ratio}</div>
-                            <div><strong>Avg Score:</strong> ${stats.avg_score_per_game}</div>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
-                            <div style="font-size: 0.85em;"><strong>Performance:</strong> ${stats.recent_performance}</div>
-                            <div style="font-size: 0.85em; margin-top: 5px;"><strong>Sentiment:</strong> ${stats.sentiment}</div>
-                            <div style="font-size: 0.7em; opacity: 0.7; margin-top: 8px; font-style: italic;">${stats.note}</div>
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Error loading player stats:', error);
-                container.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-label" style="color: #ef4444;">Error loading player statistics</div>
-                    </div>
-                `;
-            }
-        }
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchMatches();
+        });
     </script>
-
 </body>
 </html>
