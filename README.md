@@ -20,9 +20,12 @@ A comprehensive real-time esports match tracking platform that aggregates live m
 - **Unified Interface**: Single API that normalizes data from multiple sources
 
 ### AI-Powered Analysis
+- **Interactive AI Chatbot**: Real-time Q&A about matches, players, and strategies
+- **Real Data Integration**: Fetches accurate information from Liquipedia, PandaScore, HLTV, and other APIs
+- **15+ Question Categories**: Player stats, predictions, history, strategies, comparisons, and more
+- **Intelligent Query Routing**: Automatically determines the type of question and fetches relevant data
 - **Sentiment Analysis**: AI-driven community sentiment analysis for matches and teams
-- **Natural Language Q&A**: Ask questions about games, players, and teams using natural language
-- **Context-Aware Responses**: AI assistant with real-time match context
+- **Context-Aware Responses**: AI assistant with comprehensive match context and real-time statistics
 
 ### Modern Web Interface
 - **Single-Page Application**: Fast, responsive web UI built with vanilla JavaScript
