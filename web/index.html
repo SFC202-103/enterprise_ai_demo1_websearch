@@ -657,12 +657,16 @@
                     const filter = currentFilter.toLowerCase();
                     
                     // Check if game name or slug contains the filter
-                    return game.includes(filter) || slug.includes(filter) ||
-                           // Handle specific game mappings
-                           (filter === 'lol' && (game.includes('league') || slug.includes('lol'))) ||
-                           (filter === 'csgo' && (game.includes('cs:go') || game.includes('counter') || slug.includes('cs-go'))) ||
-                           (filter === 'dota2' && (game.includes('dota') || slug.includes('dota'))) ||
-                           (filter === 'rl' && (game.includes('rocket') || slug.includes('rl')));
+                    if (game.includes(filter) || slug.includes(filter)) return true;
+                    
+                    // Handle specific game mappings
+                    if (filter === 'lol' && (game.includes('league') || slug.includes('lol'))) return true;
+                    if (filter === 'csgo' && (game.includes('cs:go') || game.includes('counter') || game.includes('csgo') || slug.includes('cs-go'))) return true;
+                    if (filter === 'dota2' && (game.includes('dota') || slug.includes('dota'))) return true;
+                    if (filter === 'valorant' && (game.includes('valorant') || slug.includes('valorant'))) return true;
+                    if (filter === 'rl' && (game.includes('rocket') || slug.includes('rl'))) return true;
+                    
+                    return false;
                 });
             }
             
@@ -677,9 +681,12 @@
                     }).join(' ');
                     const tournament = (match.tournament?.name || match.league?.name || '').toLowerCase();
                     const title = (match.title || '').toLowerCase();
+                    const game = (match.game || match.videogame?.name || match.video_game || '').toLowerCase();
+                    
                     return teamNames.includes(searchTerm) || 
                            tournament.includes(searchTerm) ||
-                           title.includes(searchTerm);
+                           title.includes(searchTerm) ||
+                           game.includes(searchTerm);
                 });
             }
             
@@ -766,26 +773,37 @@
 
         // Get game information
         function getGameInfo(match) {
-            const game = (match.game || match.videogame?.name || match.videogame?.slug || '').toLowerCase();
+            const game = (match.game || match.videogame?.name || match.video_game || match.videogame?.slug || '').toLowerCase();
             
             const gameMap = {
+                'league of legends': { name: 'League of Legends', emoji: '⚔️' },
                 'lol': { name: 'League of Legends', emoji: '⚔️' },
                 'league-of-legends': { name: 'League of Legends', emoji: '⚔️' },
+                'cs:go': { name: 'CS:GO', emoji: '🔫' },
                 'csgo': { name: 'CS:GO', emoji: '🔫' },
                 'cs-go': { name: 'CS:GO', emoji: '🔫' },
+                'counter-strike': { name: 'CS:GO', emoji: '🔫' },
+                'dota 2': { name: 'Dota 2', emoji: '🗡️' },
                 'dota2': { name: 'Dota 2', emoji: '🗡️' },
                 'dota-2': { name: 'Dota 2', emoji: '🗡️' },
                 'valorant': { name: 'Valorant', emoji: '🎯' },
                 'fifa': { name: 'FIFA', emoji: '⚽' },
+                'rocket league': { name: 'Rocket League', emoji: '🚗' },
                 'rl': { name: 'Rocket League', emoji: '🚗' },
                 'rocket-league': { name: 'Rocket League', emoji: '🚗' }
             };
             
+            // Direct match
+            if (gameMap[game]) return gameMap[game];
+            
+            // Partial match
             for (const [key, value] of Object.entries(gameMap)) {
-                if (game.includes(key)) return value;
+                if (game.includes(key) || key.includes(game)) return value;
             }
             
-            return { name: 'Esports', emoji: '🎮' };
+            // Default fallback - try to extract game name from match object
+            const gameName = match.game || match.videogame?.name || match.video_game || 'Esports';
+            return { name: gameName, emoji: '🎮' };
         }
 
         // Get match time
@@ -1181,89 +1199,179 @@
         
         // Generate AI response using real data from backend
         function generateAiResponseWithData(question, apiData) {
+            if (!apiData || !apiData.match_data) {
+                console.error('Invalid API data received:', apiData);
+                return 'Unable to retrieve match analysis at this time. Please try again.';
+            }
+            
             const match = apiData.match_data;
-            const sentiment = apiData.sentiment;
+            const sentiment = apiData.sentiment || {};
             const queryType = apiData.query_type;
             
             const teams = match.teams || match.opponents || [];
             const team1 = teams[0]?.opponent || teams[0] || { name: 'Team 1' };
             const team2 = teams[1]?.opponent || teams[1] || { name: 'Team 2' };
             const game = getGameInfo(match);
+            const status = getMatchStatus(match);
+            const description = match.description || '';
             
             // Generate response based on query type and real data
-            if (queryType === 'players' && apiData.team1_stats && apiData.team2_stats) {
+            if (queryType === 'players') {
+                if (apiData.team1_stats && apiData.team2_stats) {
+                    return `
+                        <strong>📊 Player Statistics</strong><br><br>
+                        <strong>${team1.name}:</strong><br>
+                        ${formatTeamStats(apiData.team1_stats)}<br><br>
+                        <strong>${team2.name}:</strong><br>
+                        ${formatTeamStats(apiData.team2_stats)}<br><br>
+                        ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                    `;
+                }
+                // Fallback if no stats available
                 return `
                     <strong>📊 Player Statistics</strong><br><br>
-                    <strong>${team1.name}:</strong><br>
-                    ${formatTeamStats(apiData.team1_stats)}<br><br>
-                    <strong>${team2.name}:</strong><br>
-                    ${formatTeamStats(apiData.team2_stats)}<br><br>
-                    ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                    <strong>${team1.name} vs ${team2.name}</strong><br><br>
+                    Currently in ${status} status. ${description}<br><br>
+                    <em>Detailed player statistics will be available during the match.</em>
                 `;
             }
             
-            if (queryType === 'prediction' && apiData.prediction) {
-                const pred = apiData.prediction;
-                const team1Name = team1.name;
-                const team2Name = team2.name;
+            if (queryType === 'prediction') {
+                if (apiData.prediction) {
+                    const pred = apiData.prediction;
+                    const team1Name = team1.name;
+                    const team2Name = team2.name;
+                    return `
+                        <strong>🎯 Match Prediction</strong><br><br>
+                        <strong>Current Score:</strong> ${pred.current_score.team1} - ${pred.current_score.team2}<br>
+                        <strong>Leader:</strong> ${pred.leader}<br><br>
+                        <strong>Win Probability:</strong><br>
+                        • ${team1Name}: ${pred.win_probability[team1Name]}%<br>
+                        • ${team2Name}: ${pred.win_probability[team2Name]}%<br><br>
+                        ${pred.close_match ? '⚠️ This is a very close match! Expect intense gameplay.' : ''}
+                    `;
+                }
+                // Fallback prediction based on match description
+                const score1 = teams[0]?.score || 0;
+                const score2 = teams[1]?.score || 0;
+                const leader = score1 > score2 ? team1.name : score2 > score1 ? team2.name : 'Tied';
+                
                 return `
                     <strong>🎯 Match Prediction</strong><br><br>
-                    <strong>Current Score:</strong> ${pred.current_score.team1} - ${pred.current_score.team2}<br>
-                    <strong>Leader:</strong> ${pred.leader}<br><br>
-                    <strong>Win Probability:</strong><br>
-                    • ${team1Name}: ${pred.win_probability[team1Name]}%<br>
-                    • ${team2Name}: ${pred.win_probability[team2Name]}%<br><br>
-                    ${pred.close_match ? '⚠️ This is a very close match! Expect intense gameplay.' : ''}
+                    <strong>Current Score:</strong> ${score1} - ${score2}<br>
+                    <strong>Status:</strong> ${leader}<br><br>
+                    ${description}<br><br>
+                    ${sentiment.summary || 'Match analysis in progress...'}
                 `;
             }
             
-            if (queryType === 'history' && apiData.historical_matches) {
-                const history = apiData.historical_matches;
-                if (history.length === 0) {
-                    return `<strong>📜 Head-to-Head History</strong><br><br>No recent matches found between these teams.`;
+            if (queryType === 'history') {
+                if (apiData.historical_matches) {
+                    const history = apiData.historical_matches;
+                    if (history.length === 0) {
+                        return `<strong>📜 Head-to-Head History</strong><br><br>No previous matches found between ${team1.name} and ${team2.name}.`;
+                    }
+                    return `
+                        <strong>📜 Head-to-Head History</strong><br><br>
+                        Found ${history.length} recent match(es) between ${team1.name} and ${team2.name}:<br><br>
+                        ${history.map((m, i) => {
+                            const mTeams = m.teams || m.opponents || [];
+                            const mScore1 = mTeams[0]?.score || 0;
+                            const mScore2 = mTeams[1]?.score || 0;
+                            const mTeam1 = mTeams[0]?.opponent?.name || mTeams[0]?.name || 'Team 1';
+                            const mTeam2 = mTeams[1]?.opponent?.name || mTeams[1]?.name || 'Team 2';
+                            return `${i + 1}. ${mTeam1} ${mScore1} - ${mScore2} ${mTeam2}`;
+                        }).join('<br>')}
+                    `;
                 }
+                // Fallback
                 return `
                     <strong>📜 Head-to-Head History</strong><br><br>
-                    Found ${history.length} recent match(es):<br><br>
-                    ${history.map((m, i) => {
-                        const mTeams = m.teams || m.opponents || [];
-                        const mScore1 = mTeams[0]?.score || 0;
-                        const mScore2 = mTeams[1]?.score || 0;
-                        return `${i + 1}. ${mTeams[0]?.opponent?.name || mTeams[0]?.name} ${mScore1} - ${mScore2} ${mTeams[1]?.opponent?.name || mTeams[1]?.name}`;
-                    }).join('<br>')}
+                    ${team1.name} vs ${team2.name}<br><br>
+                    ${description}<br><br>
+                    <em>Historical match data is being compiled.</em>
                 `;
             }
             
-            if (queryType === 'comparison' && apiData.comparison) {
-                const comp = apiData.comparison;
+            if (queryType === 'comparison') {
+                if (apiData.comparison) {
+                    const comp = apiData.comparison;
+                    return `
+                        <strong>⚖️ Team Comparison</strong><br><br>
+                        <strong>${comp.team1.name}</strong><br>
+                        ${formatTeamStats(comp.team1.stats)}<br><br>
+                        <strong>${comp.team2.name}</strong><br>
+                        ${formatTeamStats(comp.team2.stats)}<br><br>
+                        ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                    `;
+                }
+                // Fallback comparison
                 return `
-                    <strong>⚖️ Team Comparison</strong><br><br>
-                    <strong>${comp.team1.name}</strong><br>
-                    ${formatTeamStats(comp.team1.stats)}<br><br>
-                    <strong>${comp.team2.name}</strong><br>
-                    ${formatTeamStats(comp.team2.stats)}<br><br>
-                    ${sentiment.summary ? `<em>${sentiment.summary}</em>` : ''}
+                    <strong>⚖️ Team Comparison: ${team1.name} vs ${team2.name}</strong><br><br>
+                    <strong>${team1.name}</strong><br>
+                    ${team1.acronym || 'Unknown'} | ${game.name}<br><br>
+                    <strong>${team2.name}</strong><br>
+                    ${team2.acronym || 'Unknown'} | ${game.name}<br><br>
+                    ${description}<br><br>
+                    ${sentiment.summary || '<em>Detailed comparison data is being compiled.</em>'}
                 `;
             }
             
-            // Default overview response
+            if (queryType === 'strategy') {
+                return `
+                    <strong>🎮 Strategic Analysis</strong><br><br>
+                    <strong>${team1.name} vs ${team2.name}</strong><br>
+                    <strong>Game:</strong> ${game.name}<br>
+                    <strong>Status:</strong> ${status}<br><br>
+                    ${description}<br><br>
+                    ${sentiment.summary || '<em>Strategic insights based on team playstyles and recent performance.</em>'}
+                `;
+            }
+            
+            // Default overview response - always provide information
+            const score1 = teams[0]?.score || 0;
+            const score2 = teams[1]?.score || 0;
+            const tournament = match.tournament?.name || match.league?.name || 'Unknown Tournament';
+            const matchType = match.match_type?.toUpperCase() || 'BO3';
+            
             return `
-                <strong>Match Overview: ${team1.name} vs ${team2.name}</strong><br><br>
-                <strong>Game:</strong> ${game}<br>
-                <strong>Tournament:</strong> ${match.tournament?.name || match.league?.name || 'Unknown'}<br>
-                <strong>Status:</strong> ${getMatchStatus(match)}<br><br>
-                ${sentiment.summary ? `<em>${sentiment.summary}</em><br><br>` : ''}
-                Ask me about player stats, predictions, or match history!
+                <strong>🎮 Match Overview: ${team1.name} vs ${team2.name}</strong><br><br>
+                <strong>Game:</strong> ${game.name} ${game.emoji}<br>
+                <strong>Tournament:</strong> ${tournament}<br>
+                <strong>Format:</strong> ${matchType}<br>
+                <strong>Status:</strong> ${status}<br>
+                <strong>Score:</strong> ${score1} - ${score2}<br><br>
+                ${description ? `<em>${description}</em><br><br>` : ''}
+                ${sentiment.summary ? `<strong>Analysis:</strong> ${sentiment.summary}<br><br>` : ''}
+                <em>💡 Try asking about player stats, predictions, or match history!</em>
             `;
         }
         
         // Format team stats from API data
         function formatTeamStats(stats) {
-            if (!stats || !stats.players) return 'No statistics available';
+            if (!stats) return '<em>No statistics available</em>';
             
-            return stats.players.map(p => 
-                `• ${p.name}: ${p.kda || 'N/A'} KDA, ${p.winrate || 'N/A'}% Win Rate`
-            ).join('<br>');
+            // Handle different response structures
+            if (stats.players && Array.isArray(stats.players) && stats.players.length > 0) {
+                return stats.players.map(p => 
+                    `• ${p.name || 'Player'}: ${p.kda || 'N/A'} KDA, ${p.winrate || p.win_rate || 'N/A'}% Win Rate`
+                ).join('<br>');
+            }
+            
+            // Handle when stats is an object with team info
+            if (stats.name) {
+                return `Team: ${stats.name}<br><em>Detailed statistics in progress...</em>`;
+            }
+            
+            // Handle when stats is a simple object
+            if (typeof stats === 'object') {
+                const keys = Object.keys(stats);
+                if (keys.length > 0) {
+                    return keys.map(key => `• ${key}: ${stats[key]}`).join('<br>');
+                }
+            }
+            
+            return '<em>Statistics data format not recognized</em>';
         }
         
         // Enhanced AI response generation with comprehensive question handling
