@@ -815,28 +815,104 @@
             const teams = match.teams || match.opponents || [];
             const team1 = teams[0]?.opponent || teams[0] || { name: 'TBD' };
             const team2 = teams[1]?.opponent || teams[1] || { name: 'TBD' };
+            const game = getGameInfo(match);
             
             return `
                 <div style="margin-bottom: 1.5rem;">
-                    <h3>${team1.name} vs ${team2.name}</h3>
-                    <p style="color: var(--text-muted);">${match.tournament?.name || match.league?.name || 'Tournament'}</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.5rem;">${game.emoji}</span>
+                        <h3 style="margin: 0;">${team1.name} vs ${team2.name}</h3>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0.25rem 0;">
+                        ${match.tournament?.name || match.league?.name || 'Tournament'}
+                    </p>
+                    ${match.description ? `
+                        <p style="color: var(--text-secondary); margin: 0.5rem 0; font-style: italic;">
+                            ${match.description}
+                        </p>
+                    ` : ''}
                 </div>
                 
-                ${sentiment.ok ? `
-                    <div style="background: var(--dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                        <h4>AI Sentiment Analysis</h4>
-                        <p>Overall: <span class="sentiment-badge sentiment-${sentiment.overall_sentiment?.toLowerCase() || 'neutral'}">${sentiment.overall_sentiment || 'Neutral'}</span></p>
-                        <p>Excitement Level: ${sentiment.excitement_level || 0}/100</p>
-                        <p>Fan Engagement: ${sentiment.fan_engagement || 'Unknown'}</p>
-                        ${sentiment.trending_topics ? `<p>Trending: ${sentiment.trending_topics.join(', ')}</p>` : ''}
+                ${sentiment && sentiment.ok !== false ? `
+                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); 
+                                padding: 1.25rem; border-radius: 12px; margin-bottom: 1.25rem; 
+                                border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <h4 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🤖</span> AI Sentiment Analysis
+                        </h4>
+                        <div style="display: grid; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--text-muted);">Overall Sentiment:</span>
+                                <span class="sentiment-badge sentiment-${(sentiment.overall_sentiment || 'neutral').toLowerCase().replace(' ', '-')}" 
+                                      style="padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">
+                                    ${sentiment.overall_sentiment || 'Neutral'}
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--text-muted);">Excitement Level:</span>
+                                <div style="flex: 1; max-width: 200px; margin-left: 1rem;">
+                                    <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); 
+                                                    height: 100%; width: ${sentiment.excitement_level || 0}%; 
+                                                    transition: width 0.3s ease;"></div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                        ${sentiment.excitement_level || 0}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--text-muted);">Fan Engagement:</span>
+                                <span style="color: var(--primary); font-weight: 600;">
+                                    ${sentiment.fan_engagement || 'Medium'}
+                                </span>
+                            </div>
+                            ${sentiment.trending_topics && sentiment.trending_topics.length > 0 ? `
+                                <div style="margin-top: 0.5rem;">
+                                    <span style="color: var(--text-muted); font-size: 0.875rem;">Trending:</span>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                        ${sentiment.trending_topics.map(topic => 
+                                            `<span style="background: rgba(99, 102, 241, 0.2); color: var(--primary); 
+                                                          padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem;">
+                                                ${topic}
+                                            </span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 ` : ''}
                 
-                <div style="background: var(--dark); padding: 1rem; border-radius: 8px;">
-                    <h4>Match Information</h4>
-                    <p>Status: ${match.status || 'Unknown'}</p>
-                    <p>Format: ${match.match_type || match.number_of_games || 'Best of 3'}</p>
-                    ${match.streams_list?.[0] ? `<p><a href="${match.streams_list[0].raw_url}" target="_blank" style="color: var(--primary);">📺 Watch Live</a></p>` : ''}
+                <div style="background: var(--dark); padding: 1.25rem; border-radius: 12px;">
+                    <h4 style="margin: 0 0 1rem 0;">Match Information</h4>
+                    <div style="display: grid; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Status:</span>
+                            <span style="font-weight: 600; text-transform: capitalize;">
+                                ${match.status || 'Unknown'}
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Format:</span>
+                            <span>${match.match_type?.toUpperCase() || match.number_of_games || 'Best of 3'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Game:</span>
+                            <span>${game.name}</span>
+                        </div>
+                        ${match.streams_list?.[0] ? `
+                            <div style="margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <a href="${match.streams_list[0].raw_url}" target="_blank" 
+                                   style="display: inline-flex; align-items: center; gap: 0.5rem; 
+                                          color: var(--primary); text-decoration: none; font-weight: 600;
+                                          padding: 0.5rem 1rem; background: rgba(99, 102, 241, 0.1); 
+                                          border-radius: 8px; transition: all 0.2s ease;">
+                                    📺 Watch Live on Twitch
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
             `;
         }

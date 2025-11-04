@@ -7,21 +7,22 @@
       "game": "League of Legends",
       "videogame": {"name": "League of Legends", "slug": "lol"},
       "video_game": "League of Legends",
-      "begin_at": "2025-11-04T18:00:00Z",
-      "scheduled_time": "2025-11-04T18:00:00Z",
+      "begin_at": "2025-11-04T20:30:00Z",
+      "scheduled_time": "2025-11-04T20:30:00Z",
       "provider": "Demo",
       "league": {"name": "LCK", "id": "lck_2025"},
       "tournament": {"name": "LCK Spring 2025", "id": "lck_spring_2025"},
       "teams": [
         {"id": "t1", "name": "T1", "acronym": "T1", "score": 1},
-        {"id": "geng", "name": "Gen.G", "acronym": "GEN", "score": 0}
+        {"id": "geng", "name": "Gen.G", "acronym": "GEN", "score": 1}
       ],
       "opponents": [
         {"opponent": {"id": "t1", "name": "T1", "acronym": "T1"}},
         {"opponent": {"id": "geng", "name": "Gen.G", "acronym": "GEN"}}
       ],
       "match_type": "bo3",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/lck"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/lck"}],
+      "description": "Intense LCK battle! T1 and Gen.G tied 1-1 in this Bo3 series. The deciding game is underway with both teams showing incredible macro play."
     },
     {
       "id": "demo_csgo_1",
@@ -30,21 +31,22 @@
       "game": "CS:GO",
       "videogame": {"name": "CS:GO", "slug": "cs-go"},
       "video_game": "CS:GO",
-      "begin_at": "2025-11-04T19:30:00Z",
-      "scheduled_time": "2025-11-04T19:30:00Z",
+      "begin_at": "2025-11-04T21:00:00Z",
+      "scheduled_time": "2025-11-04T21:00:00Z",
       "provider": "Demo",
       "league": {"name": "ESL Pro League", "id": "esl_pro"},
       "tournament": {"name": "ESL Pro League Season 18", "id": "esl_s18"},
       "teams": [
-        {"id": "faze", "name": "FaZe Clan", "acronym": "FaZe", "score": 13},
-        {"id": "navi", "name": "Natus Vincere", "acronym": "NAVI", "score": 11}
+        {"id": "faze", "name": "FaZe Clan", "acronym": "FaZe", "score": 14},
+        {"id": "navi", "name": "Natus Vincere", "acronym": "NAVI", "score": 12}
       ],
       "opponents": [
         {"opponent": {"id": "faze", "name": "FaZe Clan", "acronym": "FaZe"}},
         {"opponent": {"id": "navi", "name": "Natus Vincere", "acronym": "NAVI"}}
       ],
       "match_type": "bo3",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/esl_csgo"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/esl_csgo"}],
+      "description": "Nail-biting CS:GO action! FaZe leads 14-12 on Inferno. s1mple is on fire for Na'Vi, but karrigan's tactics are keeping FaZe ahead."
     },
     {
       "id": "demo_dota2_1",
@@ -53,8 +55,8 @@
       "game": "Dota 2",
       "videogame": {"name": "Dota 2", "slug": "dota-2"},
       "video_game": "Dota 2",
-      "begin_at": "2025-11-04T21:00:00Z",
-      "scheduled_time": "2025-11-04T21:00:00Z",
+      "begin_at": "2025-11-04T23:00:00Z",
+      "scheduled_time": "2025-11-04T23:00:00Z",
       "provider": "Demo",
       "league": {"name": "DPC", "id": "dpc_2025"},
       "tournament": {"name": "DPC Western Europe Tour 1", "id": "dpc_we_t1"},
@@ -67,7 +69,8 @@
         {"opponent": {"id": "liquid", "name": "Team Liquid", "acronym": "Liquid"}}
       ],
       "match_type": "bo3",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/dota2ti"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/dota2ti"}],
+      "description": "The TI champions Team Spirit face off against Team Liquid in what promises to be an epic Dota 2 showdown!"
     },
     {
       "id": "demo_valorant_1",
@@ -76,21 +79,22 @@
       "game": "Valorant",
       "videogame": {"name": "Valorant", "slug": "valorant"},
       "video_game": "Valorant",
-      "begin_at": "2025-11-04T20:00:00Z",
-      "scheduled_time": "2025-11-04T20:00:00Z",
+      "begin_at": "2025-11-04T22:00:00Z",
+      "scheduled_time": "2025-11-04T22:00:00Z",
       "provider": "Demo",
       "league": {"name": "VCT Americas", "id": "vct_americas"},
       "tournament": {"name": "VCT Americas Stage 1", "id": "vct_am_s1"},
       "teams": [
-        {"id": "sen", "name": "Sentinels", "acronym": "SEN", "score": 10},
-        {"id": "c9", "name": "Cloud9", "acronym": "C9", "score": 8}
+        {"id": "sen", "name": "Sentinels", "acronym": "SEN", "score": 11},
+        {"id": "c9", "name": "Cloud9", "acronym": "C9", "score": 9}
       ],
       "opponents": [
         {"opponent": {"id": "sen", "name": "Sentinels", "acronym": "SEN"}},
         {"opponent": {"id": "c9", "name": "Cloud9", "acronym": "C9"}}
       ],
       "match_type": "bo3",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/valorant"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/valorant"}],
+      "description": "TenZ is fragging out! Sentinels leads 11-9 on Haven. Cloud9 calling timeout to regroup."
     },
     {
       "id": "demo_rl_1",
@@ -99,8 +103,8 @@
       "game": "Rocket League",
       "videogame": {"name": "Rocket League", "slug": "rl"},
       "video_game": "Rocket League",
-      "begin_at": "2025-11-04T22:00:00Z",
-      "scheduled_time": "2025-11-04T22:00:00Z",
+      "begin_at": "2025-11-05T00:30:00Z",
+      "scheduled_time": "2025-11-05T00:30:00Z",
       "provider": "Demo",
       "league": {"name": "RLCS", "id": "rlcs_2025"},
       "tournament": {"name": "RLCS World Championship", "id": "rlcs_worlds"},
@@ -113,7 +117,8 @@
         {"opponent": {"id": "nrg", "name": "NRG", "acronym": "NRG"}}
       ],
       "match_type": "bo5",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/rocketleague"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/rocketleague"}],
+      "description": "RLCS Worlds Grand Finals! Can NRG defend their title against the European powerhouse G2?"
     },
     {
       "id": "demo_lol_2",
@@ -122,8 +127,8 @@
       "game": "League of Legends",
       "videogame": {"name": "League of Legends", "slug": "lol"},
       "video_game": "League of Legends",
-      "begin_at": "2025-11-04T23:00:00Z",
-      "scheduled_time": "2025-11-04T23:00:00Z",
+      "begin_at": "2025-11-05T01:00:00Z",
+      "scheduled_time": "2025-11-05T01:00:00Z",
       "provider": "Demo",
       "league": {"name": "LCS", "id": "lcs_2025"},
       "tournament": {"name": "LCS Spring 2025", "id": "lcs_spring"},
@@ -136,7 +141,8 @@
         {"opponent": {"id": "tl_lol", "name": "Team Liquid", "acronym": "TL"}}
       ],
       "match_type": "bo3",
-      "streams_list": [{"raw_url": "https://www.twitch.tv/lcs"}]
+      "streams_list": [{"raw_url": "https://www.twitch.tv/lcs"}],
+      "description": "Classic NA rivalry! Cloud9 and Team Liquid battle for playoff positioning in LCS Spring Split."
     },
     {
       "id": "demo_csgo_2",
@@ -145,8 +151,8 @@
       "game": "CS:GO",
       "videogame": {"name": "CS:GO", "slug": "cs-go"},
       "video_game": "CS:GO",
-      "begin_at": "2025-11-04T16:00:00Z",
-      "scheduled_time": "2025-11-04T16:00:00Z",
+      "begin_at": "2025-11-04T18:00:00Z",
+      "scheduled_time": "2025-11-04T18:00:00Z",
       "provider": "Demo",
       "league": {"name": "BLAST Premier", "id": "blast_premier"},
       "tournament": {"name": "BLAST Premier Fall 2025", "id": "blast_fall"},
@@ -159,7 +165,8 @@
         {"opponent": {"id": "heroic", "name": "Heroic", "acronym": "HER"}}
       ],
       "match_type": "bo3",
-      "results": [{"score": 2}, {"score": 0}]
+      "results": [{"score": 2}, {"score": 0}],
+      "description": "Dominant performance! ZywOo leads Vitality to a clean 2-0 sweep over Heroic with outstanding AWP play."
     },
     {
       "id": "demo_dota2_2",
@@ -168,8 +175,8 @@
       "game": "Dota 2",
       "videogame": {"name": "Dota 2", "slug": "dota-2"},
       "video_game": "Dota 2",
-      "begin_at": "2025-11-04T15:00:00Z",
-      "scheduled_time": "2025-11-04T15:00:00Z",
+      "begin_at": "2025-11-04T17:00:00Z",
+      "scheduled_time": "2025-11-04T17:00:00Z",
       "provider": "Demo",
       "league": {"name": "DPC", "id": "dpc_2025"},
       "tournament": {"name": "DPC Western Europe Tour 1", "id": "dpc_we_t1"},
@@ -182,7 +189,8 @@
         {"opponent": {"id": "tundra", "name": "Tundra Esports", "acronym": "Tundra"}}
       ],
       "match_type": "bo3",
-      "results": [{"score": 1}, {"score": 2}]
+      "results": [{"score": 1}, {"score": 2}],
+      "description": "Tundra Esports edges out OG 2-1 in a thrilling series! Amazing comeback in game 3 with a mega creep defense."
     }
   ],
   "tournaments": [

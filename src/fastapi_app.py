@@ -630,8 +630,16 @@ async def get_sentiment_analysis(match_id: Optional[str] = None, team_name: Opti
         status = (match.get("status") or "").lower()
         teams = match.get("teams") or match.get("opponents") or []
         
+        # Extract team names
+        team_names = []
+        for team in teams[:2]:
+            team_data = team.get("opponent") if "opponent" in team else team
+            team_names.append(team_data.get("name", "Unknown"))
+        
         sentiment_data = {
+            "ok": True,
             "match_id": match_id,
+            "teams": " vs ".join(team_names) if team_names else "Unknown",
             "overall_sentiment": "Positive",
             "excitement_level": 75,
             "fan_engagement": "High",
