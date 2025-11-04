@@ -245,8 +245,8 @@ def test_websocket_match_updates_disconnect():
     
     try:
         asyncio.run(test_ws())
-    except:
-        pass  # Expected to fail, we're just testing the path
+    except Exception:  # Expected to fail due to mock WebSocket
+        pass  # We're just testing the path
 
 
 def test_list_db_tournaments_exception_handling():

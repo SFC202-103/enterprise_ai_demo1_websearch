@@ -73,7 +73,7 @@ def test_websocket_exception_handling():
         async def test_ws():
             try:
                 await fa.websocket_match_updates(mock_ws, "m1")
-            except:
+            except Exception:  # Expected exception from mock WebSocket
                 pass
         
         # The function should handle exception
@@ -97,7 +97,7 @@ def test_sse_exception_handling():
         # Should handle exception gracefully
         try:
             asyncio.run(consume_sse())
-        except:
+        except Exception:  # Expected exception from SSE generator
             pass  # Expected to fail gracefully
 
 

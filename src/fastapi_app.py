@@ -1153,8 +1153,7 @@ async def ai_chat(query: str) -> Dict[str, Any]:
         }
     
     try:
-        # Import OpenAI client
-        import os
+        # Import OpenAI client (os already imported at module level)
         from openai import OpenAI
         from dotenv import load_dotenv
         

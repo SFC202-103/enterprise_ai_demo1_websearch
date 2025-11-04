@@ -44,7 +44,7 @@ def test_get_live_matches_provider_liquipedia_with_game():
         ]
         mock_class.return_value = mock_instance
         
-        result = asyncio.run(fa.get_live_matches(provider="liquipedia", game="csgo"))
+        _ = asyncio.run(fa.get_live_matches(provider="liquipedia", game="csgo"))
         
         # Check that Liquipedia was initialized with correct game
         mock_class.assert_called_once()
@@ -185,7 +185,7 @@ def test_get_live_matches_aggregation_game_filter_dota():
                     mock_re.return_value = mock_re_instance
                     
                     with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                        result = asyncio.run(fa.get_live_matches(game="dota2"))
+                        _ = asyncio.run(fa.get_live_matches(game="dota2"))
                         
                         # OpenDota should be called for dota2
                         assert mock_od.called
@@ -206,7 +206,7 @@ def test_get_live_matches_aggregation_game_filter_lol():
                     mock_cache.side_effect = cache_loader
                     
                     with patch("src.connectors.riot_connector.RiotConnector", side_effect=Exception()):
-                        result = asyncio.run(fa.get_live_matches(game="lol"))
+                        _ = asyncio.run(fa.get_live_matches(game="lol"))
                         
                         # Riot Esports should be called for lol
                         assert mock_re.called
@@ -283,7 +283,7 @@ def test_get_live_matches_aggregation_all_exceptions_handled():
             def cache_loader(key, ttl, loader):
                 try:
                     return loader()
-                except:
+                except Exception:  # Catch all exceptions during cache loading
                     return []
             mock_cache.side_effect = cache_loader
             

@@ -56,7 +56,7 @@ def _load_module_with_fake_fastapi():
 
 
 def test_get_match_returns_jsonresponse_when_no_fixture():
-    mod, JSONResponse = _load_module_with_fake_fastapi()
+    mod, _ = _load_module_with_fake_fastapi()
 
     # Ensure fixture is empty and FASTAPI_AVAILABLE is True path is used
     mod._fixture_data = {}

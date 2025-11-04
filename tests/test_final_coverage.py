@@ -156,7 +156,7 @@ def test_team_stats_draw_scenario():
     """Test team stats with draw when team is team2."""
     from fastapi.testclient import TestClient
     from src.fastapi_app import app
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import AsyncMock
     
     client = TestClient(app)
     
