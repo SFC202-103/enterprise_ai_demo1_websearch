@@ -18,11 +18,39 @@ from src.backend_store import store
 # FastAPI is optional for tests. Import lazily and fall back to stubs so the
 # module can be imported even when FastAPI isn't installed in the environment.
 try:
-    from fastapi import FastAPI, WebSocket  # type: ignore
-    from fastapi.responses import JSONResponse  # type: ignore
+    from fastapi import FastAPI, WebSocket, Header  # type: ignore
+    from fastapi.responses import JSONResponse, FileResponse, StreamingResponse  # type: ignore
     FASTAPI_AVAILABLE = True
-except Exception:  # pragma: no cover
+    try:
+        from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+        CORS_AVAILABLE = True
+    except (ImportError, ModuleNotFoundError, Exception):
+        CORS_AVAILABLE = False
+        class CORSMiddleware:  # type: ignore
+            def __init__(self, *args, **kwargs): pass
+    try:
+        from fastapi.staticfiles import StaticFiles  # type: ignore
+    except (ImportError, ModuleNotFoundError):
+        # StaticFiles requires aiofiles, which may not be installed
+        StaticFiles = None  # type: ignore
+except (ImportError, ModuleNotFoundError, Exception):  # pragma: no cover
     FASTAPI_AVAILABLE = False
+    CORS_AVAILABLE = False
+    # Provide stub classes when FastAPI is not available
+    FastAPI = None  # type: ignore
+    WebSocket = None  # type: ignore
+    class JSONResponse:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class FileResponse:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class StreamingResponse:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class StaticFiles:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class CORSMiddleware:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class Header:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
 
 
 # Load match fixture data for demo purposes
@@ -110,7 +138,6 @@ async def get_live_matches(game: Optional[str] = None, provider: Optional[str] =
     Falls back to the local fixture data when connectors are not configured.
     """
     # Check if we should use demo/fixture mode (no API keys configured)
-    import os
     use_demo_mode = os.getenv("USE_DEMO_MODE", "true").lower() == "true"
     has_api_keys = (os.getenv("PANDASCORE_TOKEN") or 
                    os.getenv("RIOT_API_KEY") or 
@@ -1070,37 +1097,30 @@ if FASTAPI_AVAILABLE:
 
             threading.Thread(target=_start_handler, daemon=True).start()
         except Exception:
-            # Best-effort fallback: run inline if threading isn't available.
-            _start_handler()
-
+            pass
+        
         yield
-
-        # No special shutdown actions are required for the demo tracker.
-
+        
     app = FastAPI(title="Esports Demo API", lifespan=_lifespan)
     # Add a permissive CORS policy for local development. In production,
     # restrict origins to your deployed frontend domains.
-    try:
-        from fastapi.middleware.cors import CORSMiddleware  # type: ignore
-
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:8000", "http://localhost:8000"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-    except Exception:
-        # If CORSMiddleware import fails for some reason, continue without it.
-        pass
+    if CORS_AVAILABLE:
+        try:
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=["http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:8000", "http://localhost:8000"],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+        except Exception:
+            # If CORS middleware fails, continue without it
+            pass
     
     # Mount static files for the web frontend
     try:
-        from fastapi.staticfiles import StaticFiles  # type: ignore
-        from fastapi.responses import FileResponse  # type: ignore
-        
         web_dir = Path(__file__).resolve().parent.parent / "web"
-        if web_dir.exists():
+        if web_dir.exists() and StaticFiles is not None:
             app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
             
             # Serve index.html at root
@@ -1110,6 +1130,7 @@ if FASTAPI_AVAILABLE:
     except Exception:
         # If static file serving fails, continue without it
         pass
+    
     app.get("/api/games")(get_games)
     app.get("/api/tournaments")(get_tournaments)
     app.get("/api/db/tournaments")(list_db_tournaments)
@@ -1164,7 +1185,6 @@ if FASTAPI_AVAILABLE:
             
             # Try to get real data from connectors based on game type
             game = (match.get("game") or match.get("videogame", {}).get("name") or "").lower()
-            provider = match.get("provider", "").lower()
             
             # Fetch additional context from appropriate connector
             if query_type == "players":
@@ -1591,53 +1611,127 @@ if FASTAPI_AVAILABLE:
                 "error": f"Failed to fetch summoner from Riot: {str(e)}"
             }
     
-    # Register enhanced Riot endpoints
-    app.get("/api/riot/league-entries")(get_riot_league_entries)
-    app.get("/api/riot/summoner")(get_riot_summoner)
+    # AI-Optimized Endpoints for enhanced assistant capabilities
+    from src.ai_endpoints import (
+        get_ai_team_profile,
+        get_ai_player_profile,
+        get_ai_head_to_head,
+        get_ai_tournament_summary,
+        OPENAI_FUNCTIONS
+    )
+    
+    async def get_ai_team_endpoint(team: str, game: str = 'lol'):
+        """Get comprehensive team profile optimized for AI queries.
+        
+        Query params:
+        - team: Team name (required) - e.g., 'G2 Esports', 'T1'
+        - game: Game identifier (default: lol)
+        
+        Returns aggregated data from multiple sources including:
+        - Team roster with roles
+        - Recent match history
+        - Win/loss statistics
+        - Current form and momentum
+        """
+        return await get_ai_team_profile(team=team, game=game)
+    
+    async def get_ai_player_endpoint(player: str, game: str = 'lol'):
+        """Get comprehensive player profile optimized for AI queries.
+        
+        Query params:
+        - player: Player name (required) - e.g., 'Faker', 'Caps'
+        - game: Game identifier (default: lol)
+        
+        Returns aggregated data including:
+        - Player basic info (role, team, country, age)
+        - Team context
+        - Career status
+        """
+        return await get_ai_player_profile(player=player, game=game)
+    
+    async def get_ai_head_to_head_endpoint(
+        team1: str,
+        team2: str,
+        game: str = 'lol',
+        limit: int = 10
+    ):
+        """Get head-to-head comparison between two teams.
+        
+        Query params:
+        - team1: First team name (required)
+        - team2: Second team name (required)
+        - game: Game identifier (default: lol)
+        - limit: Number of matches to analyze (default: 10)
+        
+        Returns head-to-head statistics and recent matchups.
+        """
+        return await get_ai_head_to_head(team1=team1, team2=team2, game=game, limit=limit)
+    
+    async def get_ai_tournament_endpoint(tournament: str, limit: int = 20):
+        """Get comprehensive tournament summary.
+        
+        Query params:
+        - tournament: Tournament name (required) - e.g., 'LEC 2024 Spring'
+        - limit: Maximum teams in standings (default: 20)
+        
+        Returns tournament information, standings, and recent matches.
+        """
+        return await get_ai_tournament_summary(tournament=tournament, limit=limit)
+    
+    async def get_openai_functions_endpoint():
+        """Get OpenAI function definitions for AI assistant integration.
+        
+        Returns list of function definitions that can be used with OpenAI's
+        function calling feature to enable the AI to automatically query
+        esports data.
+        """
+        return {
+            "ok": True,
+            "functions": OPENAI_FUNCTIONS,
+            "count": len(OPENAI_FUNCTIONS),
+            "usage": "Pass these definitions to OpenAI API 'functions' parameter"
+        }
     
     # Admin endpoint to push demo updates (POST JSON {match_id, update})
     # Wrap the impls with header-based admin token extraction so the same
     # functions can be called directly in tests without FastAPI.
-    try:
-        from fastapi import Header  # type: ignore
+    async def push_update_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+        if not _is_admin(x_admin_token):
+            return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
+        return await push_update(payload)
 
-        async def push_update_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
-            if not _is_admin(x_admin_token):
-                return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
-            return await push_update(payload)
+    async def admin_sync_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+        if not _is_admin(x_admin_token):
+            return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
+        return await admin_sync_impl(payload, x_admin_token)
 
-        async def admin_sync_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
-            if not _is_admin(x_admin_token):
-                return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
-            return await admin_sync_impl(payload, x_admin_token)
+    async def set_tracked_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
+        if not _is_admin(x_admin_token):
+            return JSONResponse(status_code=401, content={"detail": "admin token missing or invalid"})
+        return await set_tracked_impl(payload, x_admin_token)
 
-        app.post("/api/admin/push_update")(push_update_endpoint)
-        app.post("/api/admin/sync_matches")(admin_sync_endpoint)
-        async def set_tracked_endpoint(payload: dict, x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token")):
-            return await set_tracked_impl(payload, x_admin_token)
-
-        app.post("/api/tracked")(set_tracked_endpoint)
-    except Exception:
-        # If Header import or wrapper creation fails, fall back to direct
-        # registration of the underlying functions.
-        app.post("/api/admin/push_update")(push_update)
-        app.post("/api/admin/sync_matches")(admin_sync)
-        # Expose non-auth tracked setter for test environments that don't
-        # provide Header-aware wrappers.
-        app.post("/api/tracked")(set_tracked)
+    app.post("/api/admin/push_update")(push_update_endpoint)
+    app.post("/api/admin/sync_matches")(admin_sync_endpoint)
+    app.post("/api/tracked")(set_tracked_endpoint)
+    
+    # Register AI-optimized endpoints
+    app.get("/api/ai/team_profile")(get_ai_team_endpoint)
+    app.get("/api/ai/player_profile")(get_ai_player_endpoint)
+    app.get("/api/ai/head_to_head")(get_ai_head_to_head_endpoint)
+    app.get("/api/ai/tournament")(get_ai_tournament_endpoint)
+    app.get("/api/ai/openai_functions")(get_openai_functions_endpoint)
+    
+    # Register enhanced Riot API endpoints
+    app.get("/api/riot/league-entries")(get_riot_league_entries)
+    app.get("/api/riot/summoner")(get_riot_summoner)
+    
+    app.websocket("/ws/matches/{match_id}")(websocket_match_updates)
     app.websocket("/ws/matches/{match_id}")(websocket_match_updates)
     # SSE endpoint for clients that prefer EventSource over WebSockets
-    # StreamingResponse may not be available on mocked fastapi.responses used
-    # by tests; import it defensively and fall back to a no-op generator
-    try:
-        from fastapi.responses import StreamingResponse as _StreamingResponse  # type: ignore
-    except Exception:
-        _StreamingResponse = None
 
     async def _sse_endpoint(match_id: str):  # pragma: no cover
-        if _StreamingResponse is not None:  # pragma: no cover
-            return _StreamingResponse(sse_match_updates(match_id), media_type="text/event-stream")
-        # Fallback: return the generator directly. When FastAPI is real this
+        if StreamingResponse is not None:  # pragma: no cover
+            return StreamingResponse(sse_match_updates(match_id), media_type="text/event-stream")
         # path won't be used; it's only to keep imports working in tests that
         # mock fastapi.responses.
         return sse_match_updates(match_id)  # pragma: no cover
@@ -1687,7 +1781,7 @@ async def ai_chat(query: str) -> Dict[str, Any]:
         }
     
     try:
-        # Import OpenAI client (os already imported at module level)
+        # Import OpenAI client
         from openai import OpenAI
         from dotenv import load_dotenv
         

@@ -1,0 +1,37 @@
+{
+  "poro": {
+    "status": "success",
+    "teams_available": false,
+    "players_available": true,
+    "roster_join_works": false,
+    "matches_available": false,
+    "champion_stats_available": false
+  },
+  "riot": {
+    "status": "error",
+    "error": "RIOT_API_TOKEN must be set to fetch league entries"
+  },
+  "pandascore": {
+    "status": "error",
+    "error": "PandaScoreConnector.get_matches() got an unexpected keyword argument 'limit'"
+  },
+  "database": {
+    "status": "success",
+    "team_model_exists": true,
+    "player_model_exists": true,
+    "team_fields": [
+      "id",
+      "name",
+      "short_name",
+      "roster_json"
+    ],
+    "player_fields": [
+      "id",
+      "name",
+      "gamertag",
+      "team_id",
+      "role",
+      "stats"
+    ]
+  }
+}

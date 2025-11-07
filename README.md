@@ -129,6 +129,33 @@ Navigate to `http://localhost:8000` to access the web interface.
 - `GET /api/riot/summoner` - Get summoner profile by name
   - Query params: `summoner_name` (required), `platform` (NA, EUW, KR, etc.)
 
+### AI-Optimized Endpoints 🤖
+**NEW:** Aggregated endpoints specifically designed for AI assistants to answer complex esports questions.
+
+- `GET /api/ai/team_profile` - **Comprehensive team profile with roster, stats, and performance**
+  - Query params: `team` (required, e.g., "G2 Esports"), `game` (default: lol)
+  - Returns: Roster, win/loss statistics, recent form, momentum indicator
+  - Example: `curl "http://localhost:8000/api/ai/team_profile?team=G2%20Esports"`
+
+- `GET /api/ai/player_profile` - **Detailed player information with team context**
+  - Query params: `player` (required, e.g., "Faker"), `game` (default: lol)
+  - Returns: Player info, role, team, country, age, career status
+  - Example: `curl "http://localhost:8000/api/ai/player_profile?player=Faker"`
+
+- `GET /api/ai/head_to_head` - **Compare two teams with historical matchups**
+  - Query params: `team1` (required), `team2` (required), `game` (default: lol), `limit` (default: 10)
+  - Returns: Head-to-head record, win rates, recent matches
+  - Example: `curl "http://localhost:8000/api/ai/head_to_head?team1=G2%20Esports&team2=Fnatic"`
+
+- `GET /api/ai/tournament` - **Tournament summary with standings and statistics**
+  - Query params: `tournament` (required, e.g., "LEC 2024 Spring"), `limit` (default: 20)
+  - Returns: Standings, team records, win rates, leader information
+  - Example: `curl "http://localhost:8000/api/ai/tournament?tournament=LEC%202024%20Spring"`
+
+- `GET /api/ai/openai_functions` - **OpenAI function definitions for AI integration**
+  - Returns: Function schemas for OpenAI function calling feature
+  - Use these with OpenAI API to enable automatic data fetching
+
 ### Administrative Endpoints
 - `GET /api/games` - List all supported games
 - `GET /api/tournaments` - Get tournament information
